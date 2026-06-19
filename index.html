@@ -2,133 +2,263 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Quick File Engine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,700;0,800;1,400&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      colors: {
-        deep:'#0b0b0b', surface:'#131313', elevated:'#1a1a1a', panel:'#1f1f1f',
-        bordercol:'#252525',
-        acc: { blue:'#5c9dff', green:'#39d353', red:'#f85149', amber:'#e3b341', purple:'#bc8cff', teal:'#2dd4bf' }
-      },
-      fontFamily: { mono:['JetBrains Mono','monospace'], sans:['Product Sans','Google Sans','Open Sans','sans-serif'] }
-    }
-  }
-}
-</script>
+
 <style>
 :root {
-  --blue:#5c9dff; --green:#39d353; --red:#f85149;
-  --amber:#e3b341; --purple:#bc8cff; --teal:#2dd4bf;
-  --surface:rgba(19, 19, 19, 0.95); --elevated:rgba(26, 26, 26, 0.95); --panel:rgba(31, 31, 31, 0.95);
-  --border:rgba(255, 255, 255, 0.1); --tp:#e6edf3; --tm:#8b949e; --td:#484f58;
+  /* Claude Dark Theme (Default) */
+  --bg-base: #181817;
+  --bg-surface: #262625;
+  --text-main: #e5e0da;
+  --text-muted: #8b8984;
+  --accent: #d8cebc;
+  --blue: #5c9dff; --green: #39d353; --red: #f85149; --amber: #e3b341; --teal: #2dd4bf;
 }
-* { box-sizing:border-box; outline:none !important; }
-body {
-  background:radial-gradient(circle at 50% 50%, #0d1117 0%, #07090e 100%);
-  color:var(--tp);
-  font-family:'Product Sans','Google Sans','Open Sans',sans-serif;
-  font-size:13px;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  padding: 40px 20px;
-  margin: 0;
+html.light-theme {
+  /* Claude Light Theme */
+  --bg-base: #f8f7f3;
+  --bg-surface: #ffffff;
+  --text-main: #191813;
+  --text-muted: #8b8984;
+  --accent: #e5e0da;
 }
-::-webkit-scrollbar { width:3px; height:3px; }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
-button { cursor:pointer; border-radius:2px; border:none; font-family:'JetBrains Mono',monospace; }
-.card { background:var(--surface); border:none; border-radius:12px; }
-.card:hover { background:rgba(255, 255, 255, 0.03); }
-.btn {
-  border:none !important;
-  color:var(--tm);
-  padding:5px 12px;
-  font-size:11px;
-  letter-spacing:.04em;
-  background:rgba(255,255,255,0.03);
-  backdrop-filter:blur(4px);
-  border-radius:3px;
-  transition:all 120ms;
+
+* { margin: 0; padding: 0; box-sizing: border-box; outline: none !important; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-base); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); transition: background 0.3s, color 0.3s; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; opacity: 0.3; }
+
+#emptyState {
+  position: fixed; inset: 0; background: var(--bg-base); z-index: 0; display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.1em;
+  transition: background 0.3s, color 0.3s;
 }
-.btn:hover { color:var(--tp); background:rgba(255,255,255,0.08); }
-.btn-amber { color:var(--amber); } .btn-amber:hover { background:rgba(227,179,65,.15); }
-.mono { font-family:'JetBrains Mono',monospace; }
-#toasts { position:fixed; bottom:16px; right:16px; display:flex; flex-direction:column; gap:6px; z-index:9999; }
-.toast {
-  padding:10px 14px; background:var(--panel); border:1px solid var(--border); border-left:3px solid;
-  font-family:'JetBrains Mono',monospace; font-size:11px; animation:slideUp 150ms ease-out forwards;
-  max-width:320px; line-height:1.5;
+
+/* MAIN GRID / LIST */
+#filesGridContainer {
+  position: fixed; top: 0; bottom: 24px; left: 0; right: 0;
+  background: var(--bg-base); color: var(--text-main);
+  padding: 70px 24px 90px 24px; /* Phone DPI scaling & space for buttons */
+  overflow-y: auto; z-index: 1;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; align-content: start;
+  transition: background 0.3s;
 }
-.toast.amber { border-left-color:var(--amber); color:var(--amber); }
-.toast.blue { border-left-color:var(--blue); color:var(--blue); }
-.toast.green { border-left-color:var(--green); color:var(--green); }
-.toast.red { border-left-color:var(--red); color:var(--red); }
-@keyframes slideUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-.anim-slide-up { animation:slideUp 180ms ease-out; }
-#app-container { width: 100%; max-width: 800px; height: 80vh; display: flex; flex-direction: column; }
+#filesGridContainer.list-view {
+  display: flex; flex-direction: column; padding-bottom: 100px;
+}
+
+/* TOP RIGHT MINI BUTTONS */
+.top-bar-actions {
+  position: fixed; top: 16px; right: 20px; z-index: 10000; display: flex; gap: 10px;
+}
+.action-mini-btn {
+  width: 36px; height: 36px; border-radius: 10px; background: var(--bg-surface); color: var(--text-main);
+  display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.2s; border: none;
+}
+.action-mini-btn:active { transform: scale(0.9); }
+
+/* FLOATING SQUIRCLE UPLOAD BUTTON (BOTTOM RIGHT) */
+#uploadSquircleBtn {
+  position: fixed; bottom: 44px; right: 20px; z-index: 10000; width: 56px; height: 56px; border-radius: 20px;
+  background: var(--text-main); color: var(--bg-base); border: none;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  cursor: pointer; transition: transform 0.2s; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+#uploadSquircleBtn:hover { transform: translateY(-3px); }
+#uploadSquircleBtn:active { transform: scale(0.92); }
+
+button.btn {
+  background: var(--bg-base); border: none; color: var(--text-main); border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: filter 0.2s, transform 0.1s;
+}
+button.btn:hover { filter: brightness(0.9); }
+html:not(.light-theme) button.btn:hover { filter: brightness(1.2); }
+button.btn:active { transform: scale(0.96); }
+
+#toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 20px; font-size: 13px; font-weight: 500;
+  background: var(--bg-surface); color: var(--text-main); border: none;
+  z-index: 20000; display: none; max-width: 90vw; text-align: center; white-space: pre-line;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+#toast.show { display: block; animation: slideUp 150ms ease-out forwards; }
+#toast.warn { color: var(--amber); } #toast.err { color: var(--red); } #toast.info { color: var(--blue); }
+
+@keyframes slideUp{from{opacity:0;transform:translate(-50%, 10px) translateZ(0)}to{opacity:1;transform:translate(-50%, 0) translateZ(0)}}
+
+#renameModal {
+  position: fixed; z-index: 30000; background: var(--bg-surface); border-radius: 16px;
+  padding: 24px; color: var(--text-main); font-size: 13px; border: none;
+  top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90vw; max-width: 400px; display: none; flex-direction: column; gap: 12px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+}
+#renameModal.open { display: flex; }
+#renameModal h4 { color: var(--text-main); margin-bottom: 16px; font-size: 16px; font-weight: 600; padding-bottom: 12px; border: none; }
+
+#statusBar {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 24px; background: var(--bg-surface); 
+  display: flex; align-items: center; padding: 0 12px; gap: 12px; font-size: 11px; font-weight: 500; color: var(--text-muted); z-index: 9990;
+  border: none; transition: background 0.3s;
+}
+#statusBar .sb-item { white-space: nowrap; }
+#statusBar .sb-ok { color: var(--green); }
+#statusBar .sb-sep { color: var(--text-muted); opacity: 0.3; }
+
+#progressBar {
+  position: fixed; top: 0; left: 0; height: 3px; background: var(--blue); z-index: 30000;
+  width: 0%; display: none; box-shadow: none;
+}
+#progressBar.active { display: block; }
+
 .file-card {
-  display: flex; flex-direction: column; gap: 12px;
-  background: rgba(255,255,255,0.03); padding: 16px;
-  border-radius: 8px; border: 1px solid var(--border);
-  transition: all 0.2s;
+  background: var(--bg-surface); border: none;
+  border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
-.file-card:hover { border-color: var(--amber); transform: translateY(-2px); }
-.file-actions { display: flex; gap: 8px; margin-top: auto; }
+.file-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+.list-view .file-card { flex-direction: row; align-items: center; padding: 12px 16px; justify-content: space-between; }
+.list-view .file-card > div:first-child { flex: 1; min-width: 0; }
+.list-view .file-card .card-actions { flex-shrink: 0; display: flex; gap: 8px; width: auto !important; }
+.list-view .file-card .card-actions button { width: 36px; height: 36px; }
+
+.file-row-input {
+  width: 100%; background: var(--bg-base); border: none; color: var(--text-main);
+  padding: 10px 14px; border-radius: 12px; outline: none; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+}
+.file-row-input:focus { filter: brightness(0.95); }
+html:not(.light-theme) .file-row-input:focus { filter: brightness(1.2); }
+
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+.modal-actions button { background: var(--bg-base); border: none; color: var(--text-main); padding: 8px 16px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: filter 0.2s; }
+.modal-actions button:hover { filter: brightness(0.9); }
+html:not(.light-theme) .modal-actions button:hover { filter: brightness(1.2); }
 </style>
 </head>
 <body>
-<div id="toasts"></div>
-<div id="app-container">
-  <div class="card" style="flex:1;display:flex;flex-direction:column;padding:20px;overflow:hidden;background:rgba(255,255,255,0.02)">
-    
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-shrink:0">
-      <div id="notes-view-title" class="mono" style="font-size:12px;letter-spacing:.08em;color:var(--amber)">QUICK FILES (SUPABASE)</div>
-      
-      <input type="file" id="file-upload-input" style="display:none" onchange="window.uploadFile(event)">
-      
-      <button class="btn btn-amber" style="padding:6px 14px;font-size:11px;background:rgba(227,179,65,0.08)" onclick="document.getElementById('file-upload-input').click()">
-        <i class="fa-solid fa-cloud-arrow-up"></i> UPLOAD FILE
-      </button>
-    </div>
-    
-    <div id="upload-progress-container" style="display:none; width:100%; height:4px; background:rgba(255,255,255,0.05); border-radius:2px; margin-bottom:16px; overflow:hidden;">
-        <div id="upload-progress-bar" style="width:0%; height:100%; background:var(--amber); transition:width 0.2s ease-out;"></div>
-    </div>
 
-    <div id="files-container" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));gap:12px;align-content:start;padding-right:4px;">
-        </div>
+<div id="progressBar"></div>
 
+<div class="top-bar-actions">
+  <button class="action-mini-btn" onclick="document.getElementById('filesGridContainer').classList.toggle('list-view')" title="Toggle List View">
+    <i class="fa-solid fa-list"></i>
+  </button>
+  <button class="action-mini-btn" onclick="document.documentElement.classList.toggle('light-theme')" title="Toggle Theme">
+    <i class="fa-solid fa-circle-half-stroke"></i>
+  </button>
+</div>
+
+<input type="file" id="fileUploadInput" style="display:none;" onchange="window.uploadFile(event)">
+<button id="uploadSquircleBtn" onclick="document.getElementById('fileUploadInput').click()" title="Upload Document">
+  <i class="fa-solid fa-cloud-arrow-up"></i>
+</button>
+
+<div id="emptyState">
+  <i class="fa-solid fa-cloud-open" style="font-size:36px; opacity:0.3; margin-bottom: 8px;"></i>
+  <div>NO DOCUMENTS DETECTED</div>
+</div>
+
+<div id="filesGridContainer"></div>
+
+<div id="toast"></div>
+
+<div id="renameModal">
+  <h4>📁 Rename Cloud Asset</h4>
+  <div style="display:flex; flex-direction:column; gap:4px;">
+    <label style="font-size:11px; color:var(--amber); font-weight:600;">NEW FILE NAME</label>
+    <input type="text" id="renameValueInput" class="file-row-input" placeholder="document.pdf">
+  </div>
+  <input type="hidden" id="oldNameHidden">
+  <div class="modal-actions">
+    <button onclick="document.getElementById('renameModal').classList.remove('open')">✕ Cancel</button>
+    <button style="color:var(--text-main); background: var(--bg-base);" onclick="window.executeRename()">💾 Update Name</button>
   </div>
 </div>
 
+<div id="statusBar">
+  <span class="sb-item" id="sb-count">— files</span>
+  <span class="sb-sep">|</span>
+  <span class="sb-item" id="sb-storage">— MB utilized</span>
+  <span class="sb-sep">|</span>
+  <span class="sb-item">Bucket: docs</span>
+  <span class="sb-sep">|</span>
+  <span class="sb-item sb-ok" id="sb-status">ready</span>
+</div>
+</div>
+
+<!-- MAIN GRID -->
+<div id="filesGridContainer"></div>
+
+<div id="toast"></div>
+
+<!-- RENAME PATCH WINDOW -->
+<div id="renameModal">
+  <h4>📁 Rename Cloud Asset</h4>
+  <div style="display:flex; flex-direction:column; gap:4px;">
+    <label style="font-size:11px; color:var(--amber); font-weight:600;">NEW FILE NAME</label>
+    <input type="text" id="renameValueInput" class="file-row-input" placeholder="document.pdf">
+  </div>
+  <input type="hidden" id="oldNameHidden">
+  <div class="modal-actions">
+    <button onclick="document.getElementById('renameModal').classList.remove('open')">✕ Cancel</button>
+    <button style="color:var(--green); background: rgba(57, 211, 83, 0.2);" onclick="window.executeRename()">💾 Update Name</button>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="statusBar">
+  <span class="sb-item" id="sb-count">— files</span>
+  <span class="sb-sep">|</span>
+  <span class="sb-item" id="sb-storage">— MB utilized</span>
+  <span class="sb-sep">|</span>
+  <span class="sb-item">Bucket: docs</span>
+  <span class="sb-sep">|</span>
+  <span class="sb-item sb-ok" id="sb-status">ready</span>
+</div>
+
+<!-- SUPABASE CORE INTERFACE SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// --- HARDCODED SUPABASE KEYS (PUBLISHABLE ONLY) ---
+// ═══════════════════════════════════════════════════════════════════════════
+// CLOUD SYSTEM CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://fxnrugbvbfyamtrfmjea.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_FnWYWD7C9Tvc1YNtVYQ1dA_aPwVsCmE';
-const BUCKET_NAME = 'docs'; 
+const BUCKET_NAME = 'docs';
 
-// FIXED NAMING COLLISION: Changed variable from 'supabase' to 'supabaseClient'
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// --- UTILS ---
-function toast(msg, type='blue') {
-  const c = document.getElementById('toasts');
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = msg;
-  c.appendChild(el);
-  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(10px)'; setTimeout(()=>el.remove(),200); }, 3500);
+var $progress = document.getElementById('progressBar');
+var $toast = document.getElementById('toast');
+
+// --- PROGRESS UI Matrix ---
+function showProgress(pct) {
+  $progress.style.width = pct + '%';
+  $progress.classList.add('active');
+}
+function hideProgress() {
+  $progress.style.width = '100%';
+  setTimeout(function() { $progress.classList.remove('active'); $progress.style.width = '0%'; }, 150);
+}
+
+// --- TOAST DISPLAY INTERFACE ---
+var toastTimer;
+function toast(msg, type, duration) {
+  type = type || 'ok';
+  duration = duration || 2500;
+  clearTimeout(toastTimer);
+  $toast.textContent = msg;
+  $toast.className = 'show' + (type === 'warn' ? ' warn' : type === 'err' ? ' err' : type === 'info' ? ' info' : '');
+  toastTimer = setTimeout(function() { $toast.className = ''; }, duration);
 }
 
 function formatBytes(bytes, decimals = 2) {
@@ -139,121 +269,172 @@ function formatBytes(bytes, decimals = 2) {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-// --- APP LOGIC ---
+// ═══════════════════════════════════════════════════════════════════════════
+// CORE STORAGE ENGINE PIPELINE
+// ═══════════════════════════════════════════════════════════════════════════
 
-// 1. Fetch Files
+// 1. Directory Sync & Load
 window.loadFiles = async function() {
-    const container = document.getElementById('files-container');
-    container.innerHTML = '<div style="color:var(--tm); font-family:monospace;">Loading files...</div>';
+    const container = document.getElementById('filesGridContainer');
+    container.innerHTML = '<div style="color:var(--tm); font-family:monospace; grid-column: 1/-1;">Synchronizing with cloud array...</div>';
 
     const { data, error } = await supabaseClient.storage.from(BUCKET_NAME).list();
     
     if (error) {
-        container.innerHTML = `<div style="color:var(--red); font-family:monospace;">Error: ${error.message} (Did you create the policies?)</div>`;
-        return toast('Failed to load files', 'red');
+        container.innerHTML = `<div style="color:var(--red); font-family:monospace; grid-column: 1/-1;">Storage Node Error: ${error.message}</div>`;
+        return toast('Matrix sync failed', 'err');
     }
 
-    container.innerHTML = '';
-    
-    // Filter out Supabase placeholder files
     const files = data.filter(f => f.name !== '.emptyFolderPlaceholder');
+    
+    document.getElementById('sb-count').textContent = files.length + ' files';
+    let totalBytes = files.reduce((acc, f) => acc + (f.metadata?.size || 0), 0);
+    document.getElementById('sb-storage').textContent = (totalBytes / (1024 * 1024)).toFixed(2) + ' MB';
 
     if (files.length === 0) {
-        container.innerHTML = '<div style="color:var(--tm); font-family:monospace;">No files found. Upload one!</div>';
+        container.innerHTML = '';
+        document.getElementById('emptyState').style.display = 'flex';
         return;
     }
 
+    document.getElementById('emptyState').style.display = 'none';
+    container.innerHTML = '';
+    
     files.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).forEach(file => {
         const ext = file.name.split('.').pop().toLowerCase();
-        let icon = 'fa-file';
-        if(['png','jpg','jpeg','gif','webp'].includes(ext)) icon = 'fa-image';
+        let icon = 'fa-file-code';
+        if(['png','jpg','jpeg','gif','webp','svg'].includes(ext)) icon = 'fa-file-image';
         if(['pdf'].includes(ext)) icon = 'fa-file-pdf';
         if(['doc','docx'].includes(ext)) icon = 'fa-file-word';
-        if(['mp4','webm','mov'].includes(ext)) icon = 'fa-file-video';
+        if(['zip','rar','tar','gz'].includes(ext)) icon = 'fa-file-zipper';
 
-        const { data: urlData } = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(file.name);
-        const fileUrl = urlData.publicUrl;
+        const isImage = ['png','jpg','jpeg','gif','webp','svg'].includes(ext);
+                const { data: urlData } = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(file.name);
+                const fileUrl = urlData.publicUrl;
 
-        const el = document.createElement('div');
-        el.className = 'file-card anim-slide-up';
-        el.innerHTML = `
-            <div style="display:flex; gap:12px; align-items:center;">
-                <div style="width:40px;height:40px;border-radius:8px;background:rgba(227,179,65,0.1);display:flex;align-items:center;justify-content:center;color:var(--amber);font-size:18px;">
-                    <i class="fa-solid ${icon}"></i>
-                </div>
-                <div style="overflow:hidden; flex:1;">
-                    <div style="font-weight:600; font-size:13px; color:var(--tp); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${file.name}">${file.name}</div>
-                    <div style="font-size:11px; color:var(--tm); font-family:'JetBrains Mono',monospace;">${formatBytes(file.metadata?.size || 0)}</div>
-                </div>
-            </div>
-            <div class="file-actions">
-                <button class="btn" style="flex:1" onclick="window.copyLink('${fileUrl}')"><i class="fa-solid fa-link"></i> LINK</button>
-                <a href="${fileUrl}" target="_blank" class="btn" style="text-decoration:none; display:flex; align-items:center; justify-content:center; flex:1;"><i class="fa-solid fa-arrow-up-right-from-square"></i> OPEN</a>
-                <button class="btn" style="color:var(--red)" onclick="window.deleteFile('${file.name}')"><i class="fa-solid fa-trash"></i></button>
-            </div>
-        `;
-        container.appendChild(el);
+                let cleanName = file.name.includes('_') ? file.name.substring(file.name.indexOf('_') + 1) : file.name;
+
+                let previewHtml = isImage 
+                    ? `<div style="width:42px; height:42px; border-radius:10px; overflow:hidden; flex-shrink:0; background:var(--bg-base);"><img src="${fileUrl}" style="width:100%; height:100%; object-fit:cover;" loading="lazy"></div>`
+                    : `<div style="width:42px; height:42px; border-radius:10px; background:var(--bg-base); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:18px; flex-shrink:0;"><i class="fa-solid ${icon}"></i></div>`;
+
+                const card = document.createElement('div');
+                card.className = 'file-card';
+                card.innerHTML = `
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        ${previewHtml}
+                        <div style="overflow:hidden; flex:1;">
+                            <div style="font-weight:600; font-size:13px; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${cleanName}">${cleanName}</div>
+                            <div style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">${formatBytes(file.metadata?.size || 0)}</div>
+                        </div>
+                    </div>
+                    <div class="card-actions" style="display:flex; gap:8px;">
+                        <button class="btn" style="flex:1; border-radius:8px; font-size:12px; height:32px; color:var(--text-main);" onclick="window.copyLink('${fileUrl}')" title="Copy Public Link"><i class="fa-solid fa-link"></i></button>
+                        <button class="btn" style="flex:1; border-radius:8px; font-size:12px; height:32px; color:var(--blue);" onclick="window.triggerDownload('${fileUrl}', '${cleanName}')" title="Download File"><i class="fa-solid fa-download"></i></button>
+                        <button class="btn" style="flex:1; border-radius:8px; font-size:12px; height:32px; color:var(--teal);" onclick="window.openRenameModal('${file.name}')" title="Rename Asset"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn" style="flex:1; border-radius:8px; font-size:12px; height:32px; color:var(--red);" onclick="window.deleteFile('${file.name}')" title="Purge Asset"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
+                container.appendChild(card);
     });
 };
 
-// 2. Upload File
+// 2. Upload Execution Route
 window.uploadFile = async function(event) {
     const file = event.target.files[0];
     if(!file) return;
-
     event.target.value = '';
 
-    const barContainer = document.getElementById('upload-progress-container');
-    const bar = document.getElementById('upload-progress-bar');
-    barContainer.style.display = 'block';
-    bar.style.width = '30%';
-    
-    toast('Uploading file...', 'amber');
+    showProgress(20);
+    toast('Injecting payload...', 'info');
 
-    const fileName = `${Date.now()}_${file.name}`;
+    const uniqueName = `${Date.now()}_${file.name}`;
 
-    const { data, error } = await supabaseClient.storage.from(BUCKET_NAME).upload(fileName, file, {
+    const { data, error } = await supabaseClient.storage.from(BUCKET_NAME).upload(uniqueName, file, {
         cacheControl: '3600',
         upsert: false
     });
 
-    bar.style.width = '100%';
-    setTimeout(() => { barContainer.style.display = 'none'; bar.style.width = '0%'; }, 500);
-
     if (error) {
-        console.error(error);
-        return toast('Upload failed: ' + error.message, 'red');
+        hideProgress();
+        return toast('Upload rejected: ' + error.message, 'err');
     }
 
-    toast('File uploaded successfully!', 'green');
+    toast('Upload confirmed!', 'ok');
     window.loadFiles();
+    hideProgress();
 };
 
-// 3. Delete File
+// 3. Purge/Delete Sequence
 window.deleteFile = async function(fileName) {
-    if(!confirm(`Are you sure you want to delete this file?`)) return;
-
-    toast('Deleting...', 'amber');
+    if(!confirm('Purge this asset permanently?')) return;
+    
+    showProgress(40);
     const { error } = await supabaseClient.storage.from(BUCKET_NAME).remove([fileName]);
 
-    if(error) return toast('Delete failed: ' + error.message, 'red');
-    
-    toast('File deleted', 'amber');
+    if(error) {
+        hideProgress();
+        return toast('Purge failure', 'err');
+    }
+
+    toast('Asset cleanly purged.', 'ok');
     window.loadFiles();
+    hideProgress();
 };
 
-// 4. Copy Link
+// 4. Copy Matrix Routing Link
 window.copyLink = function(url) {
     navigator.clipboard.writeText(url).then(() => {
-        toast('Public link copied to clipboard!', 'blue');
-    }).catch(() => {
-        toast('Failed to copy link', 'red');
+        toast('Link copied to clipboard!', 'info');
     });
 };
 
-// Initialize App
-window.onload = () => {
+// 5. Download Execution Pipeline
+window.triggerDownload = function(url, explicitName) {
+    toast('Downloading file...', 'info');
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = explicitName;
+    anchor.target = '_blank'; 
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+};
+
+// 6. Rename Modals & Engine
+window.openRenameModal = function(fullStorageName) {
+    document.getElementById('oldNameHidden').value = fullStorageName;
+    let baselineName = fullStorageName.includes('_') ? fullStorageName.substring(fullStorageName.indexOf('_') + 1) : fullStorageName;
+    document.getElementById('renameValueInput').value = baselineName;
+    document.getElementById('renameModal').classList.add('open');
+};
+
+window.executeRename = async function() {
+    const oldName = document.getElementById('oldNameHidden').value;
+    const inputtedValue = document.getElementById('renameValueInput').value.trim();
+    
+    if(!inputtedValue) return toast('Name cannot be empty', 'warn');
+    
+    document.getElementById('renameModal').classList.remove('open');
+    showProgress(30);
+    
+    const newStorageName = oldName.includes('_') ? `${oldName.split('_')[0]}_${inputtedValue}` : `${Date.now()}_${inputtedValue}`;
+    toast('Rewriting path...', 'info');
+    
+    const { error: copyError } = await supabaseClient.storage.from(BUCKET_NAME).move(oldName, newStorageName);
+    
+    if(copyError) {
+        hideProgress();
+        return toast('Rename failed', 'err');
+    }
+    
+    toast('Asset name updated!', 'ok');
     window.loadFiles();
+    hideProgress();
+};
+
+window.onload = () => {
+  window.loadFiles();
 };
 </script>
 </body>
