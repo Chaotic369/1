@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -116,11 +116,10 @@ button { cursor:pointer; border-radius:2px; border:none; font-family:'JetBrains 
 // --- HARDCODED SUPABASE KEYS (PUBLISHABLE ONLY) ---
 const SUPABASE_URL = 'https://fxnrugbvbfyamtrfmjea.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_FnWYWD7C9Tvc1YNtVYQ1dA_aPwVsCmE';
-
-// UPDATED TO MATCH YOUR DASHBOARD EXACTLY
 const BUCKET_NAME = 'docs'; 
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// FIXED NAMING COLLISION: Changed variable from 'supabase' to 'supabaseClient'
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- UTILS ---
 function toast(msg, type='blue') {
@@ -147,7 +146,7 @@ window.loadFiles = async function() {
     const container = document.getElementById('files-container');
     container.innerHTML = '<div style="color:var(--tm); font-family:monospace;">Loading files...</div>';
 
-    const { data, error } = await supabase.storage.from(BUCKET_NAME).list();
+    const { data, error } = await supabaseClient.storage.from(BUCKET_NAME).list();
     
     if (error) {
         container.innerHTML = `<div style="color:var(--red); font-family:monospace;">Error: ${error.message} (Did you create the policies?)</div>`;
@@ -172,7 +171,7 @@ window.loadFiles = async function() {
         if(['doc','docx'].includes(ext)) icon = 'fa-file-word';
         if(['mp4','webm','mov'].includes(ext)) icon = 'fa-file-video';
 
-        const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(file.name);
+        const { data: urlData } = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(file.name);
         const fileUrl = urlData.publicUrl;
 
         const el = document.createElement('div');
@@ -202,7 +201,6 @@ window.uploadFile = async function(event) {
     const file = event.target.files[0];
     if(!file) return;
 
-    // Reset input so same file can be selected again if needed
     event.target.value = '';
 
     const barContainer = document.getElementById('upload-progress-container');
@@ -212,10 +210,9 @@ window.uploadFile = async function(event) {
     
     toast('Uploading file...', 'amber');
 
-    // Add a timestamp to prevent overwriting files with the same name
     const fileName = `${Date.now()}_${file.name}`;
 
-    const { data, error } = await supabase.storage.from(BUCKET_NAME).upload(fileName, file, {
+    const { data, error } = await supabaseClient.storage.from(BUCKET_NAME).upload(fileName, file, {
         cacheControl: '3600',
         upsert: false
     });
@@ -237,7 +234,7 @@ window.deleteFile = async function(fileName) {
     if(!confirm(`Are you sure you want to delete this file?`)) return;
 
     toast('Deleting...', 'amber');
-    const { error } = await supabase.storage.from(BUCKET_NAME).remove([fileName]);
+    const { error } = await supabaseClient.storage.from(BUCKET_NAME).remove([fileName]);
 
     if(error) return toast('Delete failed: ' + error.message, 'red');
     
