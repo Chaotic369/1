@@ -332,7 +332,113 @@ window.loadFiles = async function() {
                         <button class="btn" style="flex:1; border-radius:8px; font-size:12px; height:32px; color:var(--text-main);" onclick="window.copyLink('${fileUrl}')" title="Copy Public Link"><i class="fa-solid fa-link"></i></button>
                         <button class="btn" style="flex:1; border-radius:8px; font-size:12px; height:32px; color:var(--blue);" onclick="window.triggerDownload('${fileUrl}', '${cleanName}')" title="Download File"><i class="fa-solid fa-download"></i></button>
                         <button class="btn" style="flex:1; border-radius:8px; font-size:12px; height:32px; color:var(--teal);" onclick="window.openRenameModal('${file.name}')" title="Rename Asset"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button class="btn" style="flex:1; border-radius:8px; font-size:12px; height:32px; color:var(--red);" onclick="window.deleteFile('${file.name}')" title="Purge Asset"><i class="fa-solid fa-trash-can"></i></button>
+                                                <button class="btn" style="flex:1; border-radius:8px; font-size:12px; height:32px; color:var(--red);" onclick="window.deleteFile('${file.name}')" title="Purge Asset"><i class="fa-solid fa-trash-can"></i></button>
+                                            </div>
+                                        `;
+                                container.appendChild(card);
+                            });
+                        };
+
+                        // 2. Upload Execution Route
+                        window.uploadFile = async function(event) {
+                            const file = event.target.files[0];
+                            if(!file) return;
+                            event.target.value = '';
+
+                            showProgress(20);
+                            toast('Injecting payload...', 'info');
+
+                            const uniqueName = `${Date.now()}_${file.name}`;
+
+                            const { data, error } = await supabaseClient.storage.from(BUCKET_NAME).upload(uniqueName, file, {
+                                cacheControl: '3600',
+                                upsert: false
+                            });
+
+                            if (error) {
+                                hideProgress();
+                                return toast('Upload rejected: ' + error.message, 'err');
+                            }
+
+                            toast('Upload confirmed!', 'ok');
+                            window.loadFiles();
+                            hideProgress();
+                        };
+
+                        // 3. Purge/Delete Sequence
+                        window.deleteFile = async function(fileName) {
+                            if(!confirm('Purge this asset permanently?')) return;
+    
+                            showProgress(40);
+                            const { error } = await supabaseClient.storage.from(BUCKET_NAME).remove([fileName]);
+
+                            if(error) {
+                                hideProgress();
+                                return toast('Purge failure', 'err');
+                            }
+
+                            toast('Asset cleanly purged.', 'ok');
+                            window.loadFiles();
+                            hideProgress();
+                        };
+
+                        // 4. Copy Matrix Routing Link
+                        window.copyLink = function(url) {
+                            navigator.clipboard.writeText(url).then(() => {
+                                toast('Link copied to clipboard!', 'info');
+                            });
+                        };
+
+                        // 5. Download Execution Pipeline
+                        window.triggerDownload = function(url, explicitName) {
+                            toast('Downloading file...', 'info');
+                            const anchor = document.createElement('a');
+                            anchor.href = url;
+                            anchor.download = explicitName;
+                            anchor.target = '_blank'; 
+                            document.body.appendChild(anchor);
+                            anchor.click();
+                            document.body.removeChild(anchor);
+                        };
+
+                        // 6. Rename Modals & Engine
+                        window.openRenameModal = function(fullStorageName) {
+                            document.getElementById('oldNameHidden').value = fullStorageName;
+                            let baselineName = fullStorageName.includes('_') ? fullStorageName.substring(fullStorageName.indexOf('_') + 1) : fullStorageName;
+                            document.getElementById('renameValueInput').value = baselineName;
+                            document.getElementById('renameModal').classList.add('open');
+                        };
+
+                        window.executeRename = async function() {
+                            const oldName = document.getElementById('oldNameHidden').value;
+                            const inputtedValue = document.getElementById('renameValueInput').value.trim();
+    
+                            if(!inputtedValue) return toast('Name cannot be empty', 'warn');
+    
+                            document.getElementById('renameModal').classList.remove('open');
+                            showProgress(30);
+    
+                            const newStorageName = oldName.includes('_') ? `${oldName.split('_')[0]}_${inputtedValue}` : `${Date.now()}_${inputtedValue}`;
+                            toast('Rewriting path...', 'info');
+    
+                            const { error: copyError } = await supabaseClient.storage.from(BUCKET_NAME).move(oldName, newStorageName);
+    
+                            if(copyError) {
+                                hideProgress();
+                                return toast('Rename failed', 'err');
+                            }
+    
+                            toast('Asset name updated!', 'ok');
+                            window.loadFiles();
+                            hideProgress();
+                        };
+
+                        window.onload = () => {
+                          window.loadFiles();
+                        };
+                        </script>
+                        </body>
+                        </html>" style="flex:1; border-radius:8px; font-size:12px; height:32px; color:var(--red);" onclick="window.deleteFile('${file.name}')" title="Purge Asset"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `;
                 container.appendChild(card);
