@@ -190,15 +190,7 @@
             }
 
             #conn-status {
-                display: inline-block !important;
-                font-size: 10px;
-                padding: 2px 6px;
-                border-radius: 4px;
-                cursor: pointer;
-                transition: opacity 0.2s;
-            }
-            #conn-status:active {
-                opacity: 0.7;
+                display: none !important;
             }
 
             /* --- Action Buttons --- */
@@ -359,9 +351,9 @@
                                                                             <span id="current-asset-name">V100[1s]</span>
                                                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                                                                         </button>
-                                                                        <div style="flex-grow: 1; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+                                                                        <div style="flex-grow: 1; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                                                             <span id="balance-display" style="color: #0ecb81; font-weight: 800; font-size: 16px; letter-spacing: 0.05em;">$0.00</span>
-                                                                            <span id="conn-status" style="background:#f6465d; color:white; display:none;">OFFLINE</span>
+                                                                            <span id="conn-status" style="display:none !important;"></span>
                                                                         </div>
                                                                         <div style="display: flex; gap: 14px; align-items: center;">
                                                                             <button id="sound-toggle-btn" class="action-btn" aria-label="Toggle Sound" style="color: var(--text-muted); padding: 0 !important; background: transparent; height: auto;">
@@ -502,7 +494,6 @@
         // UI Elements
                 const candleTimeInput = document.getElementById('candle-time');
         const balanceDisplay = document.getElementById('balance-display');
-        const connStatus = document.getElementById('conn-status');
         const loadingText = document.getElementById('loading-text');
 
         // Sounds & Vibrate Feature
@@ -820,27 +811,20 @@
 
         // --- WEBSOCKET ENGINE ---
         async function connect() {
-            connStatus.innerText = 'CONNECTING';
-            connStatus.style.background = '#ffcc00';
-            connStatus.style.display = 'inline-block';
-
             let wsUrl;
             try {
                 const accountId = await getDemoAccountId();
                 wsUrl = await getWsUrl(accountId);
             } catch (err) {
                 console.error("Auth handshake failed:", err);
-                connStatus.innerText = 'OFFLINE (Tap to Retry)';
-                connStatus.style.background = '#f6465d';
-                // Avoid infinite looping alerts, silently retry later or wait for user click
+                // Auto-retry silently in background
+                setTimeout(connect, 5000);
                 return;
             }
 
             ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
-                connStatus.innerText = 'ONLINE';
-                connStatus.style.background = '#0ecb81';
                 ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
                 resizeCanvas();
                 fetchPairData(currentPair);
@@ -850,6 +834,11 @@
                             const data = JSON.parse(msg.data);
 
                                             if (data.error) {
+                                                if (data.error.code === 'ContractNotFound' || data.error.message.includes('not found among your open positions')) {
+                                                    // Suppress silent failures for closing expired contracts
+                                                    return;
+                                                }
+                                                
                                                 console.error("API Error:", data.error.message);
 
                                                 if (data.error.code === 'AlreadySubscribed' || data.error.message.includes('already subscribed')) {
@@ -862,12 +851,9 @@
                                                 }
 
                                                 if (data.error.code === 'InvalidToken' || data.error.code === 'AuthorizationRequired') {
-                                                    connStatus.innerText = 'AUTH FAILED';
-                                                    connStatus.style.background = '#f6465d';
+                                                    setTimeout(connect, 5000); // Silent reconnect loop
                                                 } else if (data.error.code === 'InvalidContractParameters') {
                                                     alert("⚠️ PARAMETER ERROR: Trading is not available for this Symbol at the selected duration.\n\nTry changing Duration to Minutes.");
-                                                } else {
-                                                    console.error("⚠️ Deriv API Error: " + data.error.message);
                                                 }
                                                 return;
                                             }
@@ -893,8 +879,8 @@
 
                 if (data.buy) {
                     const cid = data.buy.contract_id;
-                    const type = data.echo_req.parameters.contract_type;
-                    const duration = data.echo_req.parameters.duration;
+                    const type = data.echo_req.parameters && data.echo_req.parameters.contract_type ? data.echo_req.parameters.contract_type : "TRADE";
+                    const duration = data.echo_req.parameters ? data.echo_req.parameters.duration : 0;
                     const currentServerTime = Math.floor(Date.now() / 1000) + serverTimeOffset;
 
                     const t = {
@@ -910,7 +896,7 @@
                     tradeHistory.push(t);
                     playAlert('buy');
 
-                    // FIX: Live trade status never updates - Fire proposal_open_contract manually
+                    // Immediately subscribe to the live profit updates for this contract
                     ws.send(JSON.stringify({"proposal_open_contract": 1, "contract_id": cid, "subscribe": 1}));
 
                     updateTradeUI();
@@ -921,8 +907,15 @@
                     const t = tradeHistory.find(x => x.id === c.contract_id);
                     if (t) {
                         const oldStatus = t.status;
-                        t.profit = c.profit;
-                        t.status = c.is_sold ? (c.profit > 0 ? 'WON' : 'LOST') : 'OPEN';
+                        t.profit = Number(c.profit || 0);
+
+                        // Better logic for parsing Deriv's status fields to file WON/LOST correctly
+                        let newStatus = 'OPEN';
+                        if (c.status === 'won') newStatus = 'WON';
+                        else if (c.status === 'lost') newStatus = 'LOST';
+                        else if (c.is_sold) newStatus = t.profit > 0 ? 'WON' : 'LOST';
+                        
+                        t.status = newStatus;
 
                         if (c.date_expiry) t.expiry = c.date_expiry;
                         if (c.date_start) t.entry_time = c.date_start;
@@ -932,14 +925,14 @@
                             playAlert(t.status === 'WON' ? 'win' : 'loss');
                         }
 
+                        // Re-render UI to show dynamic ticking live profit
                         updateTradeUI();
                     }
                 }
             };
 
             ws.onclose = () => {
-                connStatus.innerText = 'OFFLINE (Tap to Retry)';
-                connStatus.style.background = '#f6465d';
+                setTimeout(connect, 3000);
             };
 
             ws.onerror = (e) => {
@@ -969,20 +962,24 @@
                     [...filteredTrades].reverse().forEach(t => {
                         let color = t.status === 'OPEN' ? '#ffcc00' : (t.status === 'WON' ? '#0ecb81' : '#f6465d');
                         
-                        // Sell feature manually close action
-                        let sellBtn = t.status === 'OPEN' ? `<button onclick="sellContract(${t.id})" style="background:var(--bg-btn); color:#f6465d; border:1px solid #f6465d; border-radius:4px; padding:4px 8px; font-size:10px; font-weight:bold; cursor:pointer; margin-top:6px;">CLOSE EARLY</button>` : '';
+                        // Strict Number conversion blocks TypeErrors completely
+                        let profNum = Number(t.profit || 0);
+                        let profStr = profNum.toFixed(2);
+                        let profColor = profNum > 0 ? '#0ecb81' : (profNum < 0 ? '#f6465d' : 'white');
+                        let stakeStr = Number(t.stake || 0).toFixed(2);
+
+                        let sellBtn = t.status === 'OPEN' ? `<button onclick="sellContract(${t.id})" style="background:var(--bg-btn); color:#f6465d; border:1px solid #f6465d; border-radius:4px; padding:4px 8px; font-size:10px; font-weight:bold; cursor:pointer; margin-top:6px; z-index:100;">CLOSE EARLY</button>` : '';
 
                         html += `
                                                 <div style="display:flex; justify-content:space-between; background:var(--bg-btn); padding:12px; border-radius:10px; border-left:3px solid ${color}; margin-bottom:10px; border:none;">
                                                                             <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
                                                                                 <span style="font-weight:bold; color:var(--text-main); font-size:12px;">${t.type} <span style="color:var(--text-muted); font-size:10px;">#${t.id}</span></span>
-                                <span style="color:#aaa; font-size:10px;">STAKE: $${t.stake.toFixed(2)}</span>
+                                <span style="color:#aaa; font-size:10px;">STAKE: $${stakeStr}</span>
                                 ${sellBtn}
                             </div>
                             <div style="display:flex; flex-direction:column; gap:4px; text-align:right;">
                                 <span style="font-weight:bold; font-size:12px; color:${color};">${t.status}</span>
-                                <!-- FIX: Guard against null profit -->
-                                <span style="font-weight:bold; font-size:12px; color:${(t.profit||0) > 0 ? '#0ecb81' : ((t.profit||0) < 0 ? '#f6465d' : 'white')};">$${(t.profit||0).toFixed(2)}</span>
+                                <span style="font-weight:bold; font-size:12px; color:${profColor};">$${profStr}</span>
                             </div>
                         </div>`;
                     });
@@ -1003,14 +1000,8 @@
             document.getElementById('tradeModalOverlay').style.display = 'none';
         });
 
-        // Add Reconnect feature to UI
-        document.getElementById('conn-status').addEventListener('click', () => {
-            if(document.getElementById('conn-status').innerText !== 'ONLINE') connect();
-        });
-
         // --- BULLETPROOF CHART DATA PROCESSORS ---
                 function fetchPairData(symbol) {
-                    // Start fresh if absolutely needed, but keeping cached memory per pair
                     if (!marketData[symbol]) marketData[symbol] = [];
 
                     if (tickSubscriptions[symbol]) {
@@ -1099,7 +1090,6 @@
                                     candleTimeInput.addEventListener('change', () => {
                                                 loadingText.style.display = 'block';
                                                 if (ws && ws.readyState === WebSocket.OPEN) {
-                                                    // FIX: Race condition wipe - only clear the current pair
                                                     marketData[currentPair] = [];
                                                     fetchPairData(currentPair);
                                                 }
@@ -1115,7 +1105,6 @@
 
                                             function executeTrade(type) {
             if (!ws || ws.readyState !== WebSocket.OPEN) {
-                alert("Please wait, connecting to server...");
                 return;
             }
             const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
