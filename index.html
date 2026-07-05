@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trading Dashboard - LIVE TV</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000432">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+            :root {
+                --bg-main: #000432;
+                --bg-panel: #000432;
+                --bg-btn: rgba(255, 255, 255, 0.05);
+                --text-main: #c8d0e7;
+                --text-muted: #8892b0;
+                --accent: #ffcc00;
+                --grid-line: rgba(255, 255, 255, 0.2);
+            }
+            body.theme-black {
+                --bg-main: #000000;
+                --bg-panel: #0d0d0d;
+                --bg-btn: #1a1a1a;
+                --text-main: #e0e0e0;
+                --text-muted: #888888;
+                --accent: #ff8800;
+                --grid-line: rgba(255, 255, 255, 0.1);
+            }
+            body.theme-white {
+                --bg-main: #f0f0f0;
+                --bg-panel: #ffffff;
+                --bg-btn: #e6e6e6;
+                --text-main: #222222;
+                --text-muted: #666666;
+                --accent: #ff7f00;
+                --grid-line: rgba(0, 0, 0, 0.1);
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: var(--bg-main);
+                color: var(--text-main);
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                height: 100vh;
+                box-sizing: border-box;
+                transition: background 0.3s, color 0.3s;
+            }
+
+            svg[stroke="#ffcc00"] {
+                stroke: var(--accent) !important;
+            }
+            svg[fill="#ffcc00"] {
+                fill: var(--accent) !important;
+            }
+
+            .dashboard-container {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                border: none;
+                box-sizing: border-box;
+                background: var(--bg-main);
+            }
+
+            /* --- Asset Selector Categories --- */
+                    .category-title {
+                        font-size: 12px;
+                        font-weight: bold;
+                        color: var(--text-muted);
+                        margin-bottom: 12px;
+                        letter-spacing: 1px;
+                        border-bottom: 1px dashed var(--grid-line);
+                        padding-bottom: 6px;
+                        text-transform: uppercase;
+                    }
+                    .category-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+                        gap: 10px;
+                        margin-bottom: 20px;
+                    }
+                    .asset-select-btn {
+                        background: var(--bg-btn);
+                        color: var(--text-main);
+                        border: none;
+                        padding: 12px 8px;
+                        font-size: 13px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        border-radius: 10px;
+                        text-align: center;
+                        transition: background 0.2s, color 0.2s;
+                    }
+                    .asset-select-btn:hover {
+                        background: rgba(255, 204, 0, 0.1);
+                        color: var(--accent);
+                    }
+                    .asset-select-btn.active {
+                        background: var(--bg-main);
+                        color: var(--accent);
+                        box-shadow: inset 0 0 0 1px var(--accent);
+                    }
+            .quick-pairs-inline::-webkit-scrollbar {
+                display: none;
+            }
+            .quick-pair-btn {
+                flex-grow: 1;
+                background: var(--bg-btn);
+                color: var(--text-muted);
+                border: none;
+                padding: 4px 8px;
+                font-size: 10px;
+                font-weight: bold;
+                cursor: pointer;
+                border-radius: 6px;
+                white-space: nowrap;
+                text-align: center;
+                transition: background 0.2s, color 0.2s;
+            }
+            .quick-pair-btn:hover {
+                color: var(--text-main);
+            }
+            .quick-pair-btn.active {
+                background: var(--bg-panel);
+                color: var(--accent);
+                border: none;
+                box-shadow: inset 0 -2px 0 var(--accent);
+            }
+
+            /* --- Bottom Controls --- */
+                                                                        .bottom-controls {
+                                                                            display: flex;
+                                                                            flex-direction: column;
+                                                                            flex: 0 0 auto;
+                                                                            border: none;
+                                                                            border-radius: 24px 24px 0 0;
+                                                                            margin-top: auto;
+                                                                            background-color: var(--bg-panel);
+                                                                            gap: 12px;
+                                                                            padding: 15px 12px 20px 12px;
+                                                                            justify-content: flex-start;
+                                                                            align-items: center;
+                                                                            box-sizing: border-box;
+                                                                            box-shadow: 0 -5px 25px rgba(0,0,0,0.4);
+                                                                            z-index: 10;
+                                                                        }
+                        .bottom-controls::-webkit-scrollbar {
+                            display: none;
+                        }
+
+            .control-item {
+                flex: 0 0 auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: bold;
+                padding: 0 2px;
+                background: transparent;
+                white-space: nowrap;
+                gap: 2px;
+            }
+            .control-item svg {
+                margin-right: 2px !important;
+                width: 16px !important;
+                height: 16px !important;
+            }
+
+            select, input {
+                background-color: var(--bg-btn);
+                color: var(--text-main);
+                border: none;
+                padding: 6px;
+                width: 44px;
+                border-radius: 6px;
+                text-align: center;
+                font-family: inherit;
+                outline: none;
+            }
+
+            input[type=number]::-webkit-inner-spin-button,
+            input[type=number]::-webkit-outer-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            input[type=number] {
+                -moz-appearance: textfield;
+            }
+
+            #conn-status {
+                display: inline-block !important;
+                font-size: 10px;
+                padding: 2px 6px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: opacity 0.2s;
+            }
+            #conn-status:active {
+                opacity: 0.7;
+            }
+
+            /* --- Action Buttons --- */
+            .action-btn {
+                border: none;
+                padding: 6px 8px !important;
+                font-size: 10px;
+                font-weight: bold;
+                cursor: pointer;
+                border-radius: 6px;
+                margin: 0 2px !important;
+                letter-spacing: 0.05em;
+                background: var(--bg-btn);
+                transition: transform 0.1s;
+            }
+            .action-btn:active {
+                transform: scale(0.95);
+            }
+            .btn-log {
+                color: var(--text-muted);
+            }
+            .btn-call {
+                color: #0ecb81;
+            }
+            .btn-put {
+                color: #f6465d;
+            }
+
+            /* --- Chart Section --- */
+                                                        .chart-section {
+                                                            flex: 0 0 50%;
+                                                            background-color: var(--bg-main);
+                                                            position: relative;
+                                                            overflow: hidden;
+                                                            display: flex;
+                                                            flex-direction: row;
+                                                            margin: 0;
+                                                            border-radius: 0;
+                                                            border: none;
+                                                        }
+
+            #canvas-wrapper {
+                width: 100%;
+                height: 100%;
+                position: relative;
+            }
+
+            #custom-chart {
+                width: 100%;
+                height: 100%;
+                display: block;
+            }
+
+            .floating-timeframe {
+                                                position: absolute;
+                                                top: 20px;
+                                                left: 15px;
+                                                display: flex;
+                                                flex-direction: column;
+                                                align-items: flex-start;
+                                                background: var(--bg-panel);
+                                                border: none;
+                                                border-radius: 8px;
+                                                padding: 6px 10px;
+                                                z-index: 20;
+                                                box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                                            }
+            .floating-timeframe-top {
+                display: flex;
+                align-items: center;
+            }
+                                            .floating-timeframe input {
+                                                width: 55px;
+                                                background: transparent;
+                                                border: none;
+                                                color: var(--text-main);
+                                                text-align: center;
+                                                font-weight: bold;
+                                                outline: none;
+                                                padding: 0;
+                                            }
+            .floating-timeframe input[type=number]::-webkit-inner-spin-button,
+            .floating-timeframe input[type=number]::-webkit-outer-spin-button {
+                -webkit-appearance: auto;
+                opacity: 1;
+                margin: 0;
+            }
+            .floating-timeframe input[type=number] {
+                -moz-appearance: number-input;
+            }
+            
+            .quick-time-btn { 
+                background: var(--bg-btn); 
+                color: var(--text-muted); 
+                border: none; 
+                padding: 2px 6px; 
+                font-size: 10px; 
+                cursor: pointer; 
+                border-radius: 4px; 
+                font-weight: bold; 
+            }
+            .quick-time-btn:hover { color: var(--text-main); }
+
+            #loading-text {
+                            color: var(--accent);
+                            font-weight: bold;
+                            letter-spacing: 2px;
+                            z-index: 10;
+                            position: absolute;
+                            top: 50%;
+                            left: 35%;
+                            transform: translate(-50%, -50%);
+                        }
+            
+            /* --- Modal Tabs --- */
+            .trade-tab { 
+                background: transparent; 
+                border: none; 
+                color: var(--text-muted); 
+                font-weight: bold; 
+                cursor: pointer; 
+                padding: 6px 12px; 
+                border-radius: 8px; 
+                font-size: 11px;
+            }
+            .trade-tab.active { 
+                background: var(--bg-main); 
+                color: var(--accent); 
+                box-shadow: inset 0 0 0 1px var(--accent);
+            }
+        </style>
+</head>
+<body class="theme-white">
+
+    <div class="dashboard-container">
+        <div class="chart-section">
+                    <div id="loading-text">LOADING MARKET DATA...</div>
+                    <div id="canvas-wrapper">
+                        <canvas id="custom-chart"></canvas>
+                    </div>
+                    <div class="floating-timeframe">
+                        <div class="floating-timeframe-top">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <input type="number" id="candle-time" value="8" placeholder="Time" aria-label="Candle Time Frame in Seconds" step="1">
+                        </div>
+                        <div style="display:flex; gap:4px; margin-top: 6px; width: 100%; justify-content: space-between;">
+                            <button class="quick-time-btn" data-val="1">1s</button>
+                            <button class="quick-time-btn" data-val="5">5s</button>
+                            <button class="quick-time-btn" data-val="15">15s</button>
+                            <button class="quick-time-btn" data-val="60">1m</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bottom-controls">
+                            <!-- LAYER 1: Header (Asset + Balance + Tools) -->
+                                                                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 4px; margin-bottom: 2px;">
+                                                                        <button id="asset-selector-btn" style="background: transparent; color: var(--text-main); border: none; padding: 0; font-size: 15px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; outline: none; vertical-align: middle;">
+                                                                            <span id="current-asset-name">V100[1s]</span>
+                                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                                                        </button>
+                                                                        <div style="flex-grow: 1; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+                                                                            <span id="balance-display" style="color: #0ecb81; font-weight: 800; font-size: 16px; letter-spacing: 0.05em;">$0.00</span>
+                                                                            <span id="conn-status" style="background:#f6465d; color:white; display:none;">OFFLINE</span>
+                                                                        </div>
+                                                                        <div style="display: flex; gap: 14px; align-items: center;">
+                                                                            <button id="sound-toggle-btn" class="action-btn" aria-label="Toggle Sound" style="color: var(--text-muted); padding: 0 !important; background: transparent; height: auto;">
+                                                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                                                            </button>
+                                                                            <button id="theme-toggle-btn" class="action-btn" aria-label="Toggle Theme" style="color: var(--text-main); padding: 0 !important; background: transparent; height: auto;">
+                                                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                                                                            </button>
+                                                                            <button id="show-trades-btn" class="action-btn btn-log" aria-label="Trades Log" style="padding: 0 !important; background: transparent; height: auto;">
+                                                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                                                            <!-- LAYER 2: Inputs & Actions -->
+                                                                                                                                                                                                                        <div style="display: flex; width: 100%; gap: 12px; align-items: center; justify-content: space-between;">
+                                                                                                                                                                                                                            <!-- Inputs -->
+                                                                                                                                                                                                                            <div style="display: flex; flex: 1; gap: 8px;">
+                                                                                                                                                                                                                                <div style="display:flex; flex:1; align-items:center; background:var(--bg-btn); border-radius:12px; padding:0 8px; height: 52px;">
+                                                                                                                                                                                                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                                                                                                                                                                                                                                    <input type="number" id="trade-amount" value="0.35" placeholder="Amt" aria-label="Trade Amount" step="0.01" style="font-size: 14px; padding: 0; width: 100%;">
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div style="display:flex; flex:1; align-items:center; background:var(--bg-btn); border-radius:12px; padding:0 8px; height: 52px;">
+                                                                                                                                                                                                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h16v4L12 12l8 6v4H4v-4l8-6-8-6z"></path></svg>
+                                                                                                                                                                                                                                    <input type="number" id="trade-expiry" value="35" placeholder="Exp" aria-label="Trade Expiry Time" style="font-size: 14px; padding: 0; width: 100%;">
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                            <!-- Small Right Oriented Action Buttons -->
+                                                                                                                                                                                                                            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <button id="trade-btn" class="action-btn btn-call" aria-label="Buy Call" style="background: rgba(14,203,129,0.1); border: none; padding: 6px 12px !important; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; min-width: 65px; height: 52px;">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#0ecb81" stroke="#0ecb81" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 0px 4px rgba(14,203,129,0.8));"><polygon points="12 4 2 20 22 20"></polygon></svg>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span id="call-btn-text" style="font-size: 10px; color: var(--text-main); font-weight: normal; margin-top: 4px;">$0.35 | 35s</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <button id="trade-btn-put" class="action-btn btn-put" aria-label="Sell Put" style="background: rgba(246,70,93,0.1); border: none; padding: 6px 12px !important; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; min-width: 65px; height: 52px;">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#f6465d" stroke="#f6465d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 0px 4px rgba(246,70,93,0.8));"><polygon points="12 20 2 4 22 4"></polygon></svg>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span id="put-btn-text" style="font-size: 10px; color: var(--text-main); font-weight: normal; margin-top: 4px;">$0.35 | 35s</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            </button>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                        </div>
+            
+                    </div>
+                </div>
+
+                <div id="tradeModalOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2001; backdrop-filter: blur(2px);"></div>
+                                                        <div id="tradeModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:90vw; max-width:420px; height:500px; background:var(--bg-panel); border-radius: 20px; z-index:2002; flex-direction:column; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                                                                    <div style="padding:15px; background:var(--bg-panel); color:var(--accent); font-weight:800; font-size:12px; letter-spacing:0.1em; display:flex; justify-content:space-between; align-items:center; z-index: 10;">
+                                                                                        <span>LIVE TRADE TERMINAL</span>
+                                                                                        <button id="close-modal-btn" style="background:transparent; border:none; color:var(--accent); cursor:pointer; font-size:16px;">✕</button>
+                                                            </div>
+                                                            <div style="display:flex; justify-content:space-around; background:var(--bg-panel); padding:8px 10px; border-bottom:1px solid var(--grid-line);" id="trade-tabs">
+                                                                <button class="trade-tab active" data-tab="ALL">ALL</button>
+                                                                <button class="trade-tab" data-tab="OPEN">OPEN</button>
+                                                                <button class="trade-tab" data-tab="WON">WON</button>
+                                                                <button class="trade-tab" data-tab="LOST">LOST</button>
+                                                            </div>
+                                                            <div id="tradeList" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px; background:var(--bg-panel);">
+                                <div style="color:#8892b0; text-align:center; padding:20px; font-size:12px; font-weight:bold; letter-spacing:0.05em;">NO TRADES RECORDED IN THIS SESSION</div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- ASSET SELECTOR MODAL -->
+                                                        <div id="assetModalOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2001; backdrop-filter: blur(2px);"></div>
+                                                        <div id="assetModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:90vw; max-width:420px; height:75vh; background:var(--bg-panel); border-radius: 20px; z-index:2002; flex-direction:column; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                                                            <div style="padding:15px 20px; background:var(--bg-panel); color:var(--accent); font-weight:800; font-size:14px; letter-spacing:0.1em; display:flex; justify-content:space-between; align-items:center; z-index: 10; border-bottom: 1px solid var(--grid-line);">
+                                                                <span>MARKETS</span>
+                                                                <button id="close-asset-modal-btn" style="background:transparent; border:none; color:var(--accent); cursor:pointer; font-size:20px;">✕</button>
+                                                            </div>
+                                                            <div id="assetList" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; background:var(--bg-panel);">
+                                
+                                                                <div class="asset-category">
+                                                                    <div class="category-title">Synthetic Indices</div>
+                                                                    <div class="category-grid">
+                                                                        <button class="asset-select-btn" data-val="1HZ10V">V10[1s]</button>
+                                                                        <button class="asset-select-btn" data-val="1HZ15V">V15[1s]</button>
+                                                                        <button class="asset-select-btn" data-val="1HZ25V">V25[1s]</button>
+                                                                        <button class="asset-select-btn" data-val="1HZ30V">V30[1s]</button>
+                                                                        <button class="asset-select-btn" data-val="1HZ50V">V50[1s]</button>
+                                                                        <button class="asset-select-btn" data-val="1HZ75V">V75[1s]</button>
+                                                                        <button class="asset-select-btn" data-val="1HZ90V">V90[1s]</button>
+                                                                        <button class="asset-select-btn active" data-val="1HZ100V">V100[1s]</button>
+                                                                        <button class="asset-select-btn" data-val="R_10">V10[2s]</button>
+                                                                        <button class="asset-select-btn" data-val="R_25">V25[2s]</button>
+                                                                        <button class="asset-select-btn" data-val="R_50">V50[2s]</button>
+                                                                        <button class="asset-select-btn" data-val="R_75">V75[2s]</button>
+                                                                        <button class="asset-select-btn" data-val="R_100">V100[2s]</button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="asset-category">
+                                                                    <div class="category-title">Forex</div>
+                                                                    <div class="category-grid">
+                                                                        <button class="asset-select-btn" data-val="frxEURUSD">EUR/USD</button>
+                                                                        <button class="asset-select-btn" data-val="frxGBPUSD">GBP/USD</button>
+                                                                        <button class="asset-select-btn" data-val="frxUSDJPY">USD/JPY</button>
+                                                                        <button class="asset-select-btn" data-val="frxAUDUSD">AUD/USD</button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="asset-category">
+                                                                    <div class="category-title">Cryptocurrency</div>
+                                                                    <div class="category-grid">
+                                                                        <button class="asset-select-btn" data-val="cryBTCUSD">BTC/USD</button>
+                                                                        <button class="asset-select-btn" data-val="cryETHUSD">ETH/USD</button>
+                                                                        <button class="asset-select-btn" data-val="cryLTCUSD">LTC/USD</button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="asset-category">
+                                                                    <div class="category-title">Commodities</div>
+                                                                    <div class="category-grid">
+                                                                        <button class="asset-select-btn" data-val="frxXAUUSD">Gold</button>
+                                                                        <button class="asset-select-btn" data-val="frxXAGUSD">Silver</button>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+
+                                    <script>
+        const TOKEN = "pat_aa50bbfd81b361ad5ed0114329ed2753c651560a143f67f511011dccaaf37e90";
+                                const APP_ID = "33wuhc3RztQ6f2rwZijoR";
+                                const API_BASE = "https://api.derivws.com";
+
+                let ws;
+                let currentPair = "1HZ100V";
+                let tickSubscriptions = {};
+                let tradeHistory = [];
+                let marketData = {};
+                let serverTimeOffset = 0;
+                let currentTradeTab = 'ALL';
+                let soundEnabled = false;
+
+                const trackedPairs = [
+                                                                    "1HZ10V", "1HZ15V", "1HZ25V", "1HZ30V", "1HZ50V",
+                                                                    "1HZ75V", "1HZ90V", "1HZ100V", "R_10", "R_25", "R_50", "R_75", "R_100"
+                                                                ];
+
+        // UI Elements
+                const candleTimeInput = document.getElementById('candle-time');
+        const balanceDisplay = document.getElementById('balance-display');
+        const connStatus = document.getElementById('conn-status');
+        const loadingText = document.getElementById('loading-text');
+
+        // Sounds & Vibrate Feature
+        const soundBtn = document.getElementById('sound-toggle-btn');
+        soundBtn.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            soundBtn.style.color = soundEnabled ? 'var(--accent)' : 'var(--text-muted)';
+            if(soundEnabled && navigator.vibrate) navigator.vibrate(50);
+        });
+
+        function playAlert(type) {
+            if(!soundEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                if(type === 'buy') { osc.frequency.value = 400; osc.type = 'sine'; gain.gain.value=0.1; osc.start(); osc.stop(ctx.currentTime + 0.1); }
+                else if(type === 'win') { osc.frequency.value = 800; osc.type = 'triangle'; gain.gain.value=0.1; osc.start(); osc.stop(ctx.currentTime + 0.3); }
+                else if(type === 'loss') { osc.frequency.value = 200; osc.type = 'sawtooth'; gain.gain.value=0.1; osc.start(); osc.stop(ctx.currentTime + 0.3); }
+                if(navigator.vibrate) navigator.vibrate(50);
+            } catch(e) {}
+        }
+
+        async function getDemoAccountId() {
+            const res = await fetch(`${API_BASE}/trading/v1/options/accounts`, {
+                method: 'GET',
+                headers: {
+                    'Deriv-App-ID': APP_ID,
+                    'Authorization': `Bearer ${TOKEN}`
+                }
+            });
+            const json = await res.json();
+            if (!res.ok) {
+                const msg = (json.errors && json.errors[0] && json.errors[0].message) || 'Failed to get account';
+                throw new Error(msg);
+            }
+            const accounts = Array.isArray(json.data) ? json.data : [];
+            const demoAccount = accounts.find(acct => acct.account_type === "demo");
+            if (!demoAccount) throw new Error("No demo account found associated with this token.");
+            return demoAccount.account_id;
+        }
+
+        async function getWsUrl(accountId) {
+            const res = await fetch(`${API_BASE}/trading/v1/options/accounts/${accountId}/otp`, {
+                method: 'POST',
+                headers: {
+                    'Deriv-App-ID': APP_ID,
+                    'Authorization': `Bearer ${TOKEN}`
+                }
+            });
+            const json = await res.json();
+            if (!res.ok) {
+                const msg = (json.errors && json.errors[0] && json.errors[0].message) || 'Failed to get OTP';
+                throw new Error(msg);
+            }
+            return json.data.url;
+        }
+
+        // --- CUSTOM HTML5 CANVAS CHART ---
+                let canvas = document.getElementById('custom-chart') || document.querySelector('canvas');
+                let ctx = canvas ? canvas.getContext('2d') : null;
+                let canvasWidth, canvasHeight;
+
+                function resizeCanvas() {
+                                    if (!canvas) {
+                                        canvas = document.getElementById('custom-chart') || document.querySelector('canvas');
+                                        if (canvas) ctx = canvas.getContext('2d');
+                                    }
+                                    if (!canvas) return;
+                                    const wrapper = document.getElementById('canvas-wrapper');
+                                    if (!wrapper) return;
+
+                                    canvasWidth = wrapper.clientWidth;
+                                    canvasHeight = wrapper.clientHeight;
+
+                                    const dpr = window.devicePixelRatio || 1;
+                                    canvas.width = canvasWidth * dpr;
+                                    canvas.height = canvasHeight * dpr;
+                                    ctx.scale(dpr, dpr);
+                                    canvas.style.width = `${canvasWidth}px`;
+                                    canvas.style.height = `${canvasHeight}px`;
+
+                                    ctx.imageSmoothingEnabled = true;
+                                    ctx.imageSmoothingQuality = 'high';
+
+                                    drawChart();
+                                }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawChart() {
+                    if (!ctx) return;
+                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+                    const currentCandles = marketData[currentPair] || [];
+                    if (currentCandles.length === 0) {
+                        loadingText.style.display = 'block';
+                        return;
+                    } else {
+                        loadingText.style.display = 'none';
+                    }
+
+            const yAxisWidth = 60;
+            const xAxisHeight = 25;
+            const chartAreaWidth = canvasWidth * 0.70;
+            const chartHeight = canvasHeight - xAxisHeight;
+            const candleWidth = 6;
+            const candleSpacing = 4;
+            const totalCandleWidth = candleWidth + candleSpacing;
+            const maxVisibleCandles = Math.floor(chartAreaWidth / totalCandleWidth);
+            const visibleCandles = currentCandles.slice(-maxVisibleCandles);
+
+            let minPrice = Infinity;
+            let maxPrice = -Infinity;
+            visibleCandles.forEach(c => {
+                if (c.low < minPrice) minPrice = c.low;
+                if (c.high > maxPrice) maxPrice = c.high;
+            });
+
+            const priceRange = maxPrice - minPrice || 1;
+            const paddedMin = minPrice - (priceRange * 0.1);
+            const paddedMax = maxPrice + (priceRange * 0.1);
+            const paddedRange = paddedMax - paddedMin;
+
+            function getY(price) {
+                return chartHeight - ((price - paddedMin) / paddedRange) * chartHeight;
+            }
+
+            // --- DRAW Y-AXIS (PRICE) & GRID LINES ---
+                        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#888';
+                        ctx.font = '11px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+
+            const dec = paddedMax < 10 ? 5 : (paddedMax < 1000 ? 3 : 2);
+
+            ctx.lineWidth = 1;
+            for(let i=1; i<6; i++) {
+                let yLine = (chartHeight / 6) * i;
+                ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--grid-line').trim() || 'rgba(255, 255, 255, 0.2)';
+                ctx.lineWidth = 0.2;
+                ctx.beginPath();
+                ctx.moveTo(0, yLine);
+                ctx.lineTo(canvasWidth - yAxisWidth, yLine);
+                ctx.stroke();
+
+                let priceAtLine = paddedMax - (paddedRange * (i/6));
+                ctx.fillText(priceAtLine.toFixed(dec), canvasWidth - yAxisWidth + 6, yLine);
+            }
+
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--grid-line').trim() || 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(chartAreaWidth, 0);
+            ctx.lineTo(chartAreaWidth, chartHeight);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--grid-line').trim() || 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, chartHeight);
+            ctx.lineTo(canvasWidth, chartHeight);
+            ctx.moveTo(canvasWidth - yAxisWidth, 0);
+            ctx.lineTo(canvasWidth - yAxisWidth, chartHeight);
+            ctx.stroke();
+
+            // --- DRAW CANDLES & X-AXIS (TIME) ---
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'top';
+
+                        const lastCandle = currentCandles[currentCandles.length - 1];
+
+            for (let i = 0; i < visibleCandles.length; i++) {
+                const c = visibleCandles[i];
+                const isUp = c.close >= c.open;
+
+                const color = isUp ? '#0ecb81' : '#f6465d';
+                ctx.fillStyle = color;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                const x = chartAreaWidth - ((visibleCandles.length - i) * totalCandleWidth);
+                const yOpen = getY(c.open);
+                const yClose = getY(c.close);
+                const yHigh = getY(c.high);
+                const yLow = getY(c.low);
+
+                const bodyTop = Math.min(yOpen, yClose);
+                const bodyBottom = Math.max(yOpen, yClose);
+                const bodyHeight = Math.max(1, bodyBottom - bodyTop);
+
+                ctx.beginPath();
+                ctx.moveTo(x + candleWidth / 2, yHigh);
+                ctx.lineTo(x + candleWidth / 2, yLow);
+                ctx.stroke();
+
+                ctx.fillRect(x, bodyTop, candleWidth, bodyHeight);
+
+                if (i % 12 === 0 || i === visibleCandles.length - 1) {
+                    if (i === visibleCandles.length - 1) ctx.textAlign = 'right';
+                    else ctx.textAlign = 'center';
+
+                    const date = new Date(c.time * 1000);
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const mins = date.getMinutes().toString().padStart(2, '0');
+                    const secs = date.getSeconds().toString().padStart(2, '0');
+
+                    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#888';
+                    ctx.fillText(`${hours}:${mins}:${secs}`, x + candleWidth / 2, chartHeight + 6);
+                }
+            }
+
+
+            // --- DRAW OPEN TRADE ENTRY & EXPIRY LINES ---
+            if (tradeHistory.length > 0) {
+                const lastCandleX = chartAreaWidth - totalCandleWidth;
+                const lastCandleCenterX = lastCandleX + (candleWidth / 2);
+                const candleDur = getCandleDuration();
+
+                tradeHistory.forEach(t => {
+                    if (t.status === 'OPEN' && t.expiry) {
+                        const secondsDiff = t.expiry - lastCandle.time;
+                        const lineX = lastCandleCenterX + ((secondsDiff / candleDur) * totalCandleWidth);
+                        const color = t.type === 'CALL' ? '#0ecb81' : '#f6465d';
+
+                        if (lineX > 0 && lineX < canvasWidth) {
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = 1;
+                            ctx.setLineDash([4, 4]);
+                            ctx.beginPath();
+                            ctx.moveTo(lineX, 0);
+                            ctx.lineTo(lineX, chartHeight);
+                            ctx.stroke();
+                            ctx.setLineDash([]);
+
+                            ctx.fillStyle = color;
+                            ctx.font = 'bold 9px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText('EXP', lineX, chartHeight - 2);
+                        }
+
+                        if (t.entry_spot && t.entry_time) {
+                            const entryY = getY(t.entry_spot);
+                            const entrySecondsDiff = t.entry_time - lastCandle.time;
+                            const entryX = lastCandleCenterX + ((entrySecondsDiff / candleDur) * totalCandleWidth);
+
+                            if (entryY > 0 && entryY < chartHeight) {
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 1;
+                                ctx.beginPath();
+                                ctx.moveTo(entryX, entryY);
+                                ctx.lineTo(Math.min(lineX, canvasWidth), entryY);
+                                ctx.stroke();
+
+                                ctx.fillStyle = color;
+                                ctx.beginPath();
+                                ctx.arc(entryX, entryY, 2.5, 0, Math.PI * 2);
+                                ctx.fill();
+                            }
+                        }
+                    }
+                });
+            }
+
+            // --- DRAW CURRENT PRICE LABEL & TIMER ---
+            const currentPrice = lastCandle.close;
+            const currentY = getY(currentPrice);
+            const isUp = currentPrice >= lastCandle.open;
+            const boxColor = isUp ? '#0ecb81' : '#f6465d';
+
+            ctx.strokeStyle = boxColor;
+            ctx.setLineDash([2, 4]);
+            ctx.beginPath();
+            ctx.moveTo(0, currentY);
+            ctx.lineTo(canvasWidth - yAxisWidth, currentY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const duration = getCandleDuration();
+            const currentServerTime = Math.floor(Date.now() / 1000) + serverTimeOffset;
+            let remaining = Math.max(0, (lastCandle.time + duration) - currentServerTime);
+
+            const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+            const secs = (remaining % 60).toString().padStart(2, '0');
+            const timerText = `${mins}:${secs}`;
+
+            const labelHeight = 34;
+            const labelY = currentY - labelHeight / 2;
+
+            ctx.fillStyle = boxColor;
+            ctx.fillRect(canvasWidth - yAxisWidth, labelY, yAxisWidth, labelHeight);
+
+            ctx.beginPath();
+            ctx.moveTo(canvasWidth - yAxisWidth, currentY);
+            ctx.lineTo(canvasWidth - yAxisWidth + 5, currentY - 5);
+            ctx.lineTo(canvasWidth - yAxisWidth + 5, currentY + 5);
+            ctx.fill();
+
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-main').trim() || '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textBaseline = 'top';
+            ctx.fillText(currentPrice.toFixed(dec), canvasWidth - (yAxisWidth / 2) + 2, labelY + 4);
+
+            ctx.font = '10px monospace';
+            ctx.fillText(timerText, canvasWidth - (yAxisWidth / 2) + 2, labelY + 18);
+        }
+
+        // --- WEBSOCKET ENGINE ---
+        async function connect() {
+            connStatus.innerText = 'CONNECTING';
+            connStatus.style.background = '#ffcc00';
+            connStatus.style.display = 'inline-block';
+
+            let wsUrl;
+            try {
+                const accountId = await getDemoAccountId();
+                wsUrl = await getWsUrl(accountId);
+            } catch (err) {
+                console.error("Auth handshake failed:", err);
+                connStatus.innerText = 'OFFLINE (Tap to Retry)';
+                connStatus.style.background = '#f6465d';
+                // Avoid infinite looping alerts, silently retry later or wait for user click
+                return;
+            }
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                connStatus.innerText = 'ONLINE';
+                connStatus.style.background = '#0ecb81';
+                ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+                resizeCanvas();
+                fetchPairData(currentPair);
+            };
+
+            ws.onmessage = (msg) => {
+                            const data = JSON.parse(msg.data);
+
+                                            if (data.error) {
+                                                console.error("API Error:", data.error.message);
+
+                                                if (data.error.code === 'AlreadySubscribed' || data.error.message.includes('already subscribed')) {
+                                                    return;
+                                                }
+
+                                                if (data.error.code === 'RateLimit' || data.error.message.includes('rate limit')) {
+                                                    console.warn("Deriv API Rate Limit hit - request ignored.");
+                                                    return;
+                                                }
+
+                                                if (data.error.code === 'InvalidToken' || data.error.code === 'AuthorizationRequired') {
+                                                    connStatus.innerText = 'AUTH FAILED';
+                                                    connStatus.style.background = '#f6465d';
+                                                } else if (data.error.code === 'InvalidContractParameters') {
+                                                    alert("⚠️ PARAMETER ERROR: Trading is not available for this Symbol at the selected duration.\n\nTry changing Duration to Minutes.");
+                                                } else {
+                                                    console.error("⚠️ Deriv API Error: " + data.error.message);
+                                                }
+                                                return;
+                                            }
+
+                                            if (data.balance) {
+                                                balanceDisplay.innerText = `$${data.balance.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                                            }
+
+                                if (data.history) {
+                                    const symbol = data.echo_req.ticks_history;
+                                    processHistory(symbol, data.history.times, data.history.prices);
+                                    if (symbol === currentPair) {
+                                        loadingText.style.display = 'none'; 
+                                        drawChart();
+                                    }
+                                }
+
+                                if (data.tick) {
+                                    const symbol = data.tick.symbol;
+                                    tickSubscriptions[symbol] = data.tick.id;
+                                    processLiveTick(symbol, data.tick.epoch, data.tick.quote);
+                                }
+
+                if (data.buy) {
+                    const cid = data.buy.contract_id;
+                    const type = data.echo_req.parameters.contract_type;
+                    const duration = data.echo_req.parameters.duration;
+                    const currentServerTime = Math.floor(Date.now() / 1000) + serverTimeOffset;
+
+                    const t = {
+                        id: cid,
+                        type: type,
+                        stake: data.buy.buy_price,
+                        status: 'OPEN',
+                        profit: 0,
+                        expiry: data.buy.start_time ? (data.buy.start_time + duration) : (currentServerTime + duration),
+                        entry_spot: null,
+                        entry_time: data.buy.start_time || currentServerTime
+                    };
+                    tradeHistory.push(t);
+                    playAlert('buy');
+
+                    // FIX: Live trade status never updates - Fire proposal_open_contract manually
+                    ws.send(JSON.stringify({"proposal_open_contract": 1, "contract_id": cid, "subscribe": 1}));
+
+                    updateTradeUI();
+                }
+
+                if (data.proposal_open_contract) {
+                    const c = data.proposal_open_contract;
+                    const t = tradeHistory.find(x => x.id === c.contract_id);
+                    if (t) {
+                        const oldStatus = t.status;
+                        t.profit = c.profit;
+                        t.status = c.is_sold ? (c.profit > 0 ? 'WON' : 'LOST') : 'OPEN';
+
+                        if (c.date_expiry) t.expiry = c.date_expiry;
+                        if (c.date_start) t.entry_time = c.date_start;
+                        if (c.entry_tick) t.entry_spot = c.entry_tick;
+
+                        if (oldStatus === 'OPEN' && t.status !== 'OPEN') {
+                            playAlert(t.status === 'WON' ? 'win' : 'loss');
+                        }
+
+                        updateTradeUI();
+                    }
+                }
+            };
+
+            ws.onclose = () => {
+                connStatus.innerText = 'OFFLINE (Tap to Retry)';
+                connStatus.style.background = '#f6465d';
+            };
+
+            ws.onerror = (e) => {
+                console.error("WebSocket error:", e);
+            };
+        }
+
+        // --- TRADES UI MODAL ---
+        document.querySelectorAll('.trade-tab').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.trade-tab').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentTradeTab = e.target.getAttribute('data-tab');
+                updateTradeUI();
+            });
+        });
+
+                function updateTradeUI() {
+                    const list = document.getElementById('tradeList');
+                    const filteredTrades = tradeHistory.filter(t => currentTradeTab === 'ALL' || t.status === currentTradeTab);
+
+                    if (filteredTrades.length === 0) {
+                        list.innerHTML = '<div style="color:#8892b0; text-align:center; padding:20px; font-size:12px; font-weight:bold; letter-spacing:0.05em;">NO TRADES FOUND</div>';
+                        return;
+                    }
+                    let html = '';
+                    [...filteredTrades].reverse().forEach(t => {
+                        let color = t.status === 'OPEN' ? '#ffcc00' : (t.status === 'WON' ? '#0ecb81' : '#f6465d');
+                        
+                        // Sell feature manually close action
+                        let sellBtn = t.status === 'OPEN' ? `<button onclick="sellContract(${t.id})" style="background:var(--bg-btn); color:#f6465d; border:1px solid #f6465d; border-radius:4px; padding:4px 8px; font-size:10px; font-weight:bold; cursor:pointer; margin-top:6px;">CLOSE EARLY</button>` : '';
+
+                        html += `
+                                                <div style="display:flex; justify-content:space-between; background:var(--bg-btn); padding:12px; border-radius:10px; border-left:3px solid ${color}; margin-bottom:10px; border:none;">
+                                                                            <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+                                                                                <span style="font-weight:bold; color:var(--text-main); font-size:12px;">${t.type} <span style="color:var(--text-muted); font-size:10px;">#${t.id}</span></span>
+                                <span style="color:#aaa; font-size:10px;">STAKE: $${t.stake.toFixed(2)}</span>
+                                ${sellBtn}
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:4px; text-align:right;">
+                                <span style="font-weight:bold; font-size:12px; color:${color};">${t.status}</span>
+                                <!-- FIX: Guard against null profit -->
+                                <span style="font-weight:bold; font-size:12px; color:${(t.profit||0) > 0 ? '#0ecb81' : ((t.profit||0) < 0 ? '#f6465d' : 'white')};">$${(t.profit||0).toFixed(2)}</span>
+                            </div>
+                        </div>`;
+                    });
+                    list.innerHTML = html;
+                }
+
+        document.getElementById('show-trades-btn').addEventListener('click', () => {
+            document.getElementById('tradeModal').style.display = 'flex';
+            document.getElementById('tradeModalOverlay').style.display = 'block';
+            updateTradeUI();
+        });
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            document.getElementById('tradeModal').style.display = 'none';
+            document.getElementById('tradeModalOverlay').style.display = 'none';
+        });
+        document.getElementById('tradeModalOverlay').addEventListener('click', () => {
+            document.getElementById('tradeModal').style.display = 'none';
+            document.getElementById('tradeModalOverlay').style.display = 'none';
+        });
+
+        // Add Reconnect feature to UI
+        document.getElementById('conn-status').addEventListener('click', () => {
+            if(document.getElementById('conn-status').innerText !== 'ONLINE') connect();
+        });
+
+        // --- BULLETPROOF CHART DATA PROCESSORS ---
+                function fetchPairData(symbol) {
+                    // Start fresh if absolutely needed, but keeping cached memory per pair
+                    if (!marketData[symbol]) marketData[symbol] = [];
+
+                    if (tickSubscriptions[symbol]) {
+                        ws.send(JSON.stringify({ forget: tickSubscriptions[symbol] }));
+                        delete tickSubscriptions[symbol];
+                    }
+
+                    ws.send(JSON.stringify({
+                        ticks_history: symbol,
+                        end: "latest",
+                        count: 2500,
+                        style: "ticks",
+                        subscribe: 1
+                    }));
+                }
+
+                function switchPairView(newPair) {
+                    currentPair = newPair;
+                    if (!marketData[newPair] || marketData[newPair].length === 0) {
+                        loadingText.style.display = 'block';
+                        if (ws && ws.readyState === WebSocket.OPEN) fetchPairData(newPair);
+                    } else {
+                        drawChart();
+                    }
+                }
+
+                function getCandleDuration() {
+                                    return (parseInt(candleTimeInput.value) || 8);
+                                }
+
+                function processHistory(symbol, times, prices) {
+                    const duration = getCandleDuration();
+
+                    if (symbol === currentPair && times.length > 0) {
+                        serverTimeOffset = times[times.length - 1] - Math.floor(Date.now() / 1000);
+                    }
+
+                    let candleMap = new Map();
+
+                    for (let i = 0; i < times.length; i++) {
+                        const group = Math.floor(times[i] / duration) * duration;
+                        const p = prices[i];
+
+                        if (!candleMap.has(group)) {
+                            candleMap.set(group, { time: group, open: p, high: p, low: p, close: p });
+                        } else {
+                            let c = candleMap.get(group);
+                            c.high = Math.max(c.high, p);
+                            c.low = Math.min(c.low, p);
+                            c.close = p;
+                        }
+                    }
+
+                    marketData[symbol] = Array.from(candleMap.values()).sort((a, b) => a.time - b.time);
+                }
+
+                function processLiveTick(symbol, epoch, price) {
+                    if (symbol === currentPair) {
+                        serverTimeOffset = epoch - Math.floor(Date.now() / 1000);
+                    }
+
+                    let candles = marketData[symbol];
+                    if (!candles || candles.length === 0) return;
+
+                    const duration = getCandleDuration();
+                    const group = Math.floor(epoch / duration) * duration;
+                    let lastCandle = candles[candles.length - 1];
+
+                    if (group < lastCandle.time) return;
+
+                    if (group === lastCandle.time) {
+                        lastCandle.high = Math.max(lastCandle.high, price);
+                        lastCandle.low = Math.min(lastCandle.low, price);
+                        lastCandle.close = price;
+                    } else {
+                        const newCandle = { time: group, open: price, high: price, low: price, close: price };
+                        candles.push(newCandle);
+
+                        if (candles.length > 2500) candles.shift();
+                    }
+
+                                        if (symbol === currentPair) drawChart();
+                                    }
+
+                            // --- INPUT EVENT LISTENERS ---
+                                    candleTimeInput.addEventListener('change', () => {
+                                                loadingText.style.display = 'block';
+                                                if (ws && ws.readyState === WebSocket.OPEN) {
+                                                    // FIX: Race condition wipe - only clear the current pair
+                                                    marketData[currentPair] = [];
+                                                    fetchPairData(currentPair);
+                                                }
+                                            });
+                                    
+                                    // Quick time buttons
+                                    document.querySelectorAll('.quick-time-btn').forEach(btn => {
+                                        btn.addEventListener('click', (e) => {
+                                            document.getElementById('candle-time').value = e.target.getAttribute('data-val');
+                                            document.getElementById('candle-time').dispatchEvent(new Event('change'));
+                                        });
+                                    });
+
+                                            function executeTrade(type) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert("Please wait, connecting to server...");
+                return;
+            }
+            const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
+            const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
+
+            const tradePayload = {
+                buy: "1",
+                price: Number(stake * 2),
+                parameters: {
+                    amount: Number(stake),
+                    basis: "stake",
+                    contract_type: type,
+                    currency: "USD",
+                    duration: expirySecs,
+                    duration_unit: "s",
+                    underlying_symbol: currentPair
+                }
+            };
+            ws.send(JSON.stringify(tradePayload));
+        }
+
+        window.sellContract = function(id) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ sell: id, price: 0 }));
+            }
+        };
+
+        // Event listener connections for the buttons
+                document.getElementById('trade-btn').addEventListener('click', () => executeTrade("CALL"));
+                document.getElementById('trade-btn-put').addEventListener('click', () => executeTrade("PUT"));
+
+                function updateButtonText() {
+                    const amt = document.getElementById('trade-amount').value || '0';
+                    const exp = document.getElementById('trade-expiry').value || '0';
+                    const txt = `$${amt} | ${exp}s`;
+                    const callTxt = document.getElementById('call-btn-text');
+                    const putTxt = document.getElementById('put-btn-text');
+                    if (callTxt) callTxt.innerText = txt;
+                    if (putTxt) putTxt.innerText = txt;
+                }
+                document.getElementById('trade-amount').addEventListener('input', updateButtonText);
+                document.getElementById('trade-expiry').addEventListener('input', updateButtonText);
+        
+                updateButtonText();
+                connect();
+
+        // --- ASSET SELECTOR MODAL LOGIC ---
+                const assetSelectorBtn = document.getElementById('asset-selector-btn');
+                const assetModal = document.getElementById('assetModal');
+                const assetModalOverlay = document.getElementById('assetModalOverlay');
+                const closeAssetModalBtn = document.getElementById('close-asset-modal-btn');
+                const currentAssetName = document.getElementById('current-asset-name');
+                const assetSelectBtns = document.querySelectorAll('.asset-select-btn');
+
+                assetSelectorBtn.addEventListener('click', () => {
+                    assetModal.style.display = 'flex';
+                    assetModalOverlay.style.display = 'block';
+                });
+
+                function closeAssetModal() {
+                    assetModal.style.display = 'none';
+                    assetModalOverlay.style.display = 'none';
+                }
+
+                closeAssetModalBtn.addEventListener('click', closeAssetModal);
+                assetModalOverlay.addEventListener('click', closeAssetModal);
+
+                assetSelectBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const newPair = e.target.getAttribute('data-val');
+                        const newName = e.target.innerText;
+                
+                                                assetSelectBtns.forEach(b => b.classList.remove('active'));
+                                                e.target.classList.add('active');
+                                                currentAssetName.innerText = newName;
+
+                                                let minAmt = 0.35;
+                                                let minExp = 15; 
+                        
+                                                if (newPair.startsWith('frx') || newPair.startsWith('cry')) {
+                                                    minAmt = 0.50; 
+                                                    minExp = 60;   
+                                                }
+
+                                                const amtInput = document.getElementById('trade-amount');
+                                                const expInput = document.getElementById('trade-expiry');
+                                                if (amtInput) amtInput.value = minAmt;
+                                                if (expInput) expInput.value = minExp;
+                                                updateButtonText();
+
+                                                closeAssetModal();
+                                                switchPairView(newPair);
+                                            });
+                                        });
+
+                        setInterval(() => {
+                            if (marketData[currentPair] && marketData[currentPair].length > 0) drawChart();
+                        }, 1000);
+
+                                                // Theme Toggle Logic
+                                                                        const themes = ['theme-blue', 'theme-black', 'theme-white'];
+                                                                        let currentThemeIdx = 2;
+                                                                        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+                                                if(themeToggleBtn) {
+                                                    themeToggleBtn.addEventListener('click', () => {
+                                                        document.body.classList.remove('theme-black', 'theme-white');
+                                                        currentThemeIdx = (currentThemeIdx + 1) % 3;
+                                                        if (currentThemeIdx === 1) document.body.classList.add('theme-black');
+                                                        else if (currentThemeIdx === 2) document.body.classList.add('theme-white');
+                                                        drawChart(); 
+                                                    });
+                                                }
+
+                            </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+    </body>
+</html>
