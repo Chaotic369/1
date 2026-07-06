@@ -625,13 +625,23 @@
             const visibleCandles = currentCandles.slice(-maxVisibleCandles);
 
             let minPrice = Infinity;
-            let maxPrice = -Infinity;
-            visibleCandles.forEach(c => {
-                if (c.low < minPrice) minPrice = c.low;
-                if (c.high > maxPrice) maxPrice = c.high;
-            });
+                        let maxPrice = -Infinity;
+                        visibleCandles.forEach(c => {
+                            if (c.low < minPrice) minPrice = c.low;
+                            if (c.high > maxPrice) maxPrice = c.high;
+                        });
 
-            const priceRange = maxPrice - minPrice || 1;
+                        if (tradeHistory && tradeHistory.length > 0) {
+                            tradeHistory.forEach(t => {
+                                if (t.status === 'OPEN' && t.entry_spot && t.multiplier && (t.type === 'MULTUP' || t.type === 'MULTDOWN')) {
+                                    const burstPrice = t.type === 'MULTUP' ? t.entry_spot * (1 - (1 / t.multiplier)) : t.entry_spot * (1 + (1 / t.multiplier));
+                                    if (burstPrice < minPrice) minPrice = burstPrice;
+                                    if (burstPrice > maxPrice) maxPrice = burstPrice;
+                                }
+                            });
+                        }
+
+                        const priceRange = maxPrice - minPrice || 1;
             const paddedMin = minPrice - (priceRange * 0.1);
             const paddedMax = maxPrice + (priceRange * 0.1);
             const paddedRange = paddedMax - paddedMin;
@@ -785,26 +795,32 @@
                                     }
 
                                     if (isMultiplier && t.entry_spot && t.multiplier) {
-                                        const burstPrice = t.type === 'MULTUP' ? t.entry_spot * (1 - (1 / t.multiplier)) : t.entry_spot * (1 + (1 / t.multiplier));
-                                        const burstY = getY(burstPrice);
+                                                                const burstPrice = t.type === 'MULTUP' ? t.entry_spot * (1 - (1 / t.multiplier)) : t.entry_spot * (1 + (1 / t.multiplier));
+                                                                const burstY = getY(burstPrice);
 
-                                        if (burstY > 0 && burstY < chartHeight) {
-                                            ctx.strokeStyle = '#f6465d';
-                                            ctx.lineWidth = 1.5;
-                                            ctx.setLineDash([4, 4]);
-                                            ctx.beginPath();
-                                            ctx.moveTo(0, burstY);
-                                            ctx.lineTo(canvasWidth - yAxisWidth, burstY);
-                                            ctx.stroke();
-                                            ctx.setLineDash([]);
+                                                                ctx.fillStyle = 'rgba(246, 70, 93, 0.05)';
+                                                                if (t.type === 'MULTUP') {
+                                                                    ctx.fillRect(0, burstY, canvasWidth - yAxisWidth, chartHeight - burstY);
+                                                                } else {
+                                                                    ctx.fillRect(0, 0, canvasWidth - yAxisWidth, burstY);
+                                                                }
 
-                                            ctx.fillStyle = '#f6465d';
-                                            ctx.font = 'bold 9px sans-serif';
-                                            ctx.textAlign = 'right';
-                                            ctx.textBaseline = 'bottom';
-                                            ctx.fillText('BURST', canvasWidth - yAxisWidth - 5, burstY - 2);
-                                        }
-                                    }
+                                                                ctx.strokeStyle = '#f6465d';
+                                                                ctx.lineWidth = 2;
+                                                                ctx.setLineDash([2, 2]);
+                                                                ctx.beginPath();
+                                                                ctx.moveTo(0, burstY);
+                                                                ctx.lineTo(canvasWidth - yAxisWidth, burstY);
+                                                                ctx.stroke();
+                                                                ctx.setLineDash([]);
+
+                                                                ctx.fillStyle = '#f6465d';
+                                                                ctx.font = 'bold 10px sans-serif';
+                                                                ctx.textAlign = 'right';
+                                                                ctx.textBaseline = t.type === 'MULTUP' ? 'top' : 'bottom';
+                                                                const textOffset = t.type === 'MULTUP' ? 4 : -4;
+                                                                ctx.fillText('⚠️ BURST LINE', canvasWidth - yAxisWidth - 5, burstY + textOffset);
+                                                            }
                                 }
                             });
                         }
