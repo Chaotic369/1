@@ -526,19 +526,23 @@
                                     }
 
                                     const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
-                                    const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
+                                                                        const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
+                                    
+                                                                        let dUnit = "s";
+                                                                        let dVal = expirySecs;
+                                                                        if (dVal <= 10) dUnit = "t";
 
-                                    ws.send(JSON.stringify({
-                                        proposal: 1,
-                                        amount: stake,
-                                        basis: "stake",
-                                        contract_type: "CALL", // Fetch payout dynamics using CALL as standard proxy
-                                        currency: "USD",
-                                        duration: expirySecs,
-                                        duration_unit: "s",
-                                        symbol: currentPair,
-                                        subscribe: 1
-                                    }));
+                                                                        ws.send(JSON.stringify({
+                                                                            proposal: 1,
+                                                                            amount: stake,
+                                                                            basis: "stake",
+                                                                            contract_type: "CALL", // Fetch payout dynamics using CALL as standard proxy
+                                                                            currency: "USD",
+                                                                            duration: dVal,
+                                                                            duration_unit: dUnit,
+                                                                            symbol: currentPair,
+                                                                            subscribe: 1
+                                                                        }));
                                 }
                 let marketData = {};
                 let serverTimeOffset = 0;
@@ -941,29 +945,42 @@
                             const data = JSON.parse(msg.data);
 
                                             if (data.error) {
-                                                if (data.error.code === 'ContractNotFound' || data.error.message.includes('not found among your open positions')) {
-                                                    // Suppress silent failures for closing expired contracts
-                                                    return;
-                                                }
+                                                                                            if (data.error.code === 'ContractNotFound' || data.error.message.includes('not found among your open positions')) {
+                                                                                                // Suppress silent failures for closing expired contracts
+                                                                                                return;
+                                                                                            }
                                                 
-                                                console.error("API Error:", data.error.message);
+                                                                                            console.error("API Error:", data.error.message);
 
-                                                if (data.error.code === 'AlreadySubscribed' || data.error.message.includes('already subscribed')) {
-                                                    return;
-                                                }
+                                                                                            if (data.error.code === 'AlreadySubscribed' || data.error.message.includes('already subscribed')) {
+                                                                                                return;
+                                                                                            }
 
-                                                if (data.error.code === 'RateLimit' || data.error.message.includes('rate limit')) {
-                                                    console.warn("Deriv API Rate Limit hit - request ignored.");
-                                                    return;
-                                                }
+                                                                                            if (data.error.code === 'RateLimit' || data.error.message.includes('rate limit')) {
+                                                                                                console.warn("Deriv API Rate Limit hit - request ignored.");
+                                                                                                return;
+                                                                                            }
 
-                                                if (data.error.code === 'InvalidToken' || data.error.code === 'AuthorizationRequired') {
-                                                    setTimeout(connect, 5000); // Silent reconnect loop
-                                                } else if (data.error.code === 'InvalidContractParameters') {
-                                                    alert("⚠️ PARAMETER ERROR: Trading is not available for this Symbol at the selected duration/mode.\n\nTry changing Duration or Asset.");
-                                                }
-                                                return;
-                                            }
+                                                                                            if (data.error.code === 'InvalidToken' || data.error.code === 'AuthorizationRequired') {
+                                                                                                setTimeout(connect, 5000); // Silent reconnect loop
+                                                                                            } else if (data.error.code === 'InvalidContractParameters') {
+                                                                                                alert("⚠️ PARAMETER ERROR: Trading is not available for this Symbol at the selected duration/mode.\n\nTry changing Duration or Asset.");
+                                                                                            } else if (data.error.code === 'InvalidContractProposal' || data.error.message.toLowerCase().includes('time duration')) {
+                                                                                                const pctElem = document.getElementById('payout-percentage');
+                                                                                                const rateBadge = document.getElementById('asset-payout-rate');
+                                                                                                const profElem = document.getElementById('payout-profit');
+                                                    
+                                                                                                if (pctElem) pctElem.innerText = `N/A`;
+                                                                                                if (rateBadge) rateBadge.innerText = `UNAVAILABLE`;
+                                                                                                if (profElem) {
+                                                                                                    profElem.innerText = `INVALID`;
+                                                                                                    profElem.style.color = '#f6465d';
+                                                                                                }
+                                                                                            } else {
+                                                                                                alert("⚠️ API ERROR: " + data.error.message);
+                                                                                            }
+                                                                                            return;
+                                                                                        }
 
                                             if (data.balance) {
                                                 balanceDisplay.innerText = `$${data.balance.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
@@ -985,27 +1002,23 @@
                                                                 }
 
                                                                 if (data.proposal && data.proposal.id) {
-                                                                                                    proposalSubId = data.proposal.id;
-                                                                                                    const ask = data.proposal.ask_price;
-                                                                                                    const payout = data.proposal.payout;
-                                                                                                    const profit = payout - ask;
-                                                                                                    const percentage = ask > 0 ? ((profit / ask) * 100).toFixed(1) : "0.0";
+                                                                                                                                                                    proposalSubId = data.proposal.id;
+                                                                                                                                                                    const ask = data.proposal.ask_price;
+                                                                                                                                                                    const payout = data.proposal.payout;
+                                                                                                                                                                    const profit = payout - ask;
+                                                                                                                                                                    const percentage = ask > 0 ? ((profit / ask) * 100).toFixed(1) : "0.0";
                                     
-                                                                                                    const pctElem = document.getElementById('payout-percentage');
-                                                                                                    const profElem = document.getElementById('payout-profit');
-                                                                                                    const rateBadge = document.getElementById('asset-payout-rate');
+                                                                                                                                                                    const pctElem = document.getElementById('payout-percentage');
+                                                                                                                                                                    const profElem = document.getElementById('payout-profit');
+                                                                                                                                                                    const rateBadge = document.getElementById('asset-payout-rate');
                                     
-                                                                                                    if (pctElem) pctElem.innerText = `${percentage}%`;
-                                                                                                    if (profElem) profElem.innerText = `+$${profit.toFixed(2)}`;
-                                                                                                    if (rateBadge) rateBadge.innerText = `${percentage}% PAYOUT`;
-                                                                                                }
-                                
-                                                                                                if (data.error && data.error.code === 'InvalidContractProposal') {
-                                                                                                    const pctElem = document.getElementById('payout-percentage');
-                                                                                                    const rateBadge = document.getElementById('asset-payout-rate');
-                                                                                                    if (pctElem) pctElem.innerText = `N/A`;
-                                                                                                    if (rateBadge) rateBadge.innerText = `UNAVAILABLE`;
-                                                                                                }
+                                                                                                                                                                    if (pctElem) pctElem.innerText = `${percentage}%`;
+                                                                                                                                                                    if (profElem) {
+                                                                                                                                                                        profElem.innerText = `+$${profit.toFixed(2)}`;
+                                                                                                                                                                        profElem.style.color = '#0ecb81';
+                                                                                                                                                                    }
+                                                                                                                                                                    if (rateBadge) rateBadge.innerText = `${percentage}% PAYOUT`;
+                                                                                                                                                                }
 
                 if (data.buy) {
                                     const cid = data.buy.contract_id;
@@ -1253,22 +1266,27 @@
             let tradePayload;
 
             if (activeTradeType === 'options') {
-                const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
-                const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
-                tradePayload = {
-                    buy: "1",
-                    price: Number(stake * 2),
-                    parameters: {
-                        amount: Number(stake),
-                        basis: "stake",
-                        contract_type: type, // "CALL" or "PUT"
-                        currency: "USD",
-                        duration: expirySecs,
-                        duration_unit: "s",
-                        underlying_symbol: currentPair
-                    }
-                };
-            } else if (activeTradeType === 'multiplier') {
+                            const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
+                            const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
+                
+                            let dUnit = "s";
+                            let dVal = expirySecs;
+                            if (dVal <= 10) dUnit = "t";
+
+                            tradePayload = {
+                                buy: "1",
+                                price: Number(stake * 2),
+                                parameters: {
+                                    amount: Number(stake),
+                                    basis: "stake",
+                                    contract_type: type, // "CALL" or "PUT"
+                                    currency: "USD",
+                                    duration: dVal,
+                                    duration_unit: dUnit,
+                                    underlying_symbol: currentPair
+                                }
+                            };
+                        } else if (activeTradeType === 'multiplier') {
                 const stake = parseFloat(document.getElementById('mult-amount').value) || 10;
                 const multVal = parseInt(document.getElementById('mult-value').value) || 500;
                 const multType = type === "CALL" ? "MULTUP" : "MULTDOWN";
@@ -1319,11 +1337,12 @@
         document.getElementById('trade-btn-put').addEventListener('click', () => executeTrade("PUT"));
 
         function updateButtonText() {
-            let txt = '';
-            if (activeTradeType === 'options') {
-                const amt = document.getElementById('trade-amount').value || '0';
-                const exp = document.getElementById('trade-expiry').value || '0';
-                txt = `$${amt} | ${exp}s`;
+                    let txt = '';
+                    if (activeTradeType === 'options') {
+                        const amt = document.getElementById('trade-amount').value || '0';
+                        const exp = document.getElementById('trade-expiry').value || '0';
+                        const unit = parseInt(exp) <= 10 ? 't' : 's';
+                        txt = `$${amt} | ${exp}${unit}`;
             } else {
                 const amt = document.getElementById('mult-amount').value || '0';
                 const mult = document.getElementById('mult-value').value || '0';
@@ -1374,12 +1393,12 @@
                                                 currentAssetName.innerText = newName;
 
                                                 let minAmt = 0.35;
-                                                let minExp = 15; 
+                                                                                                let minExp = 5; 
                         
-                                                if (newPair.startsWith('frx') || newPair.startsWith('cry')) {
-                                                    minAmt = 0.50; 
-                                                    minExp = 60;   
-                                                }
+                                                                                                if (newPair.startsWith('frx') || newPair.startsWith('cry')) {
+                                                                                                    minAmt = 0.50; 
+                                                                                                    minExp = 60;   
+                                                                                                }
 
                                                 const amtInput = document.getElementById('trade-amount');
                                                 const expInput = document.getElementById('trade-expiry');
