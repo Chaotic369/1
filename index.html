@@ -356,10 +356,13 @@
                 </div>
                 <div class="bottom-controls">
                             <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 4px; margin-bottom: 2px;">
-                                                                        <button id="asset-selector-btn" style="background: transparent; color: var(--text-main); border: none; padding: 0; font-size: 15px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; outline: none; vertical-align: middle;">
-                                                                            <span id="current-asset-name">V100[1s]</span>
-                                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                                                                        </button>
+                                                                        <button id="asset-selector-btn" style="background: transparent; color: var(--text-main); border: none; padding: 0; font-size: 15px; font-weight: bold; cursor: pointer; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; outline: none; vertical-align: middle;">
+                                                                                                                                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                                                                                                                                        <span id="current-asset-name">V100[1s]</span>
+                                                                                                                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                                                                                                                                    </div>
+                                                                                                                                                    <span id="asset-payout-rate" style="font-size: 10px; color: #0ecb81; font-weight: 800; background: rgba(14,203,129,0.1); padding: 2px 6px; border-radius: 4px; letter-spacing: 0.05em; transition: all 0.2s;">--% PAYOUT</span>
+                                                                                                                                                </button>
                                                                         <div style="flex-grow: 1; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                                                             <span id="balance-display" style="color: #0ecb81; font-weight: 800; font-size: 16px; letter-spacing: 0.05em;">$0.00</span>
                                                                             <span id="conn-status" style="display:none !important;"></span>
@@ -982,22 +985,27 @@
                                                                 }
 
                                                                 if (data.proposal && data.proposal.id) {
-                                                                    proposalSubId = data.proposal.id;
-                                                                    const ask = data.proposal.ask_price;
-                                                                    const payout = data.proposal.payout;
-                                                                    const profit = payout - ask;
-                                                                    const percentage = ask > 0 ? ((profit / ask) * 100).toFixed(1) : "0.0";
+                                                                                                    proposalSubId = data.proposal.id;
+                                                                                                    const ask = data.proposal.ask_price;
+                                                                                                    const payout = data.proposal.payout;
+                                                                                                    const profit = payout - ask;
+                                                                                                    const percentage = ask > 0 ? ((profit / ask) * 100).toFixed(1) : "0.0";
                                     
-                                                                    const pctElem = document.getElementById('payout-percentage');
-                                                                    const profElem = document.getElementById('payout-profit');
-                                                                    if (pctElem) pctElem.innerText = `${percentage}%`;
-                                                                    if (profElem) profElem.innerText = `+$${profit.toFixed(2)}`;
-                                                                }
+                                                                                                    const pctElem = document.getElementById('payout-percentage');
+                                                                                                    const profElem = document.getElementById('payout-profit');
+                                                                                                    const rateBadge = document.getElementById('asset-payout-rate');
+                                    
+                                                                                                    if (pctElem) pctElem.innerText = `${percentage}%`;
+                                                                                                    if (profElem) profElem.innerText = `+$${profit.toFixed(2)}`;
+                                                                                                    if (rateBadge) rateBadge.innerText = `${percentage}% PAYOUT`;
+                                                                                                }
                                 
-                                                                if (data.error && data.error.code === 'InvalidContractProposal') {
-                                                                    const pctElem = document.getElementById('payout-percentage');
-                                                                    if (pctElem) pctElem.innerText = `N/A`;
-                                                                }
+                                                                                                if (data.error && data.error.code === 'InvalidContractProposal') {
+                                                                                                    const pctElem = document.getElementById('payout-percentage');
+                                                                                                    const rateBadge = document.getElementById('asset-payout-rate');
+                                                                                                    if (pctElem) pctElem.innerText = `N/A`;
+                                                                                                    if (rateBadge) rateBadge.innerText = `UNAVAILABLE`;
+                                                                                                }
 
                 if (data.buy) {
                                     const cid = data.buy.contract_id;
