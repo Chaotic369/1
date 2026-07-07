@@ -378,20 +378,26 @@
                                                                     </div>
 
                                                                                                             <div style="display: flex; width: 100%; gap: 40px; justify-content: center; margin-bottom: 12px; margin-top: 4px;" id="trade-type-tabs">
-                                                                                                                                                                                                                            <button class="trade-tab active" data-ttype="options" style="flex: none; background: transparent !important; box-shadow: none !important; font-size: 13px; font-weight: 800; letter-spacing: 0.05em; padding: 4px 8px;">OPTIONS</button>
+                                                                                                                                                                                                                            <button class="trade-tab active" data-ttype="options" style="flex: none; background: transparent !important; box-shadow: none !important; font-size: 13px; font-weight: 800; letter-spacing: 0.05em; padding: 4px 8px;">BINARY OPTIONS</button>
                                                                                                                                                                                                                             <button class="trade-tab" data-ttype="multiplier" style="flex: none; background: transparent !important; box-shadow: none !important; font-size: 13px; font-weight: 800; letter-spacing: 0.05em; padding: 4px 8px;">MULTIPLIER</button>
                                                                                                                                                                                                                         </div>
                                                                                                                                                                                                                         <div style="display: flex; width: 100%; gap: 12px; align-items: center; justify-content: space-between;">
-                                                                                                                                                                                                                            <div style="display: flex; flex: 1; gap: 8px;" id="inputs-options">
-                                                                                                                                                                                                                                <div style="display:flex; flex:1; align-items:center; background:var(--bg-btn); border-radius:24px; padding:0 8px; height: 52px;">
-                                                                                                                                                                                                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                                                                                                                                                                                                                                    <input type="number" id="trade-amount" value="0.35" placeholder="Amt" aria-label="Trade Amount" step="0.01" style="font-size: 14px; padding: 0; width: 100%;">
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div style="display:flex; flex:1; align-items:center; background:var(--bg-btn); border-radius:24px; padding:0 8px; height: 52px;">
-                                                                                                                                                                                                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h16v4L12 12l8 6v4H4v-4l8-6-8-6z"></path></svg>
-                                                                                                                                                                                                                                    <input type="number" id="trade-expiry" value="35" placeholder="Exp" aria-label="Trade Expiry Time" style="font-size: 14px; padding: 0; width: 100%;">
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                            <div style="display: flex; flex: 1; flex-direction: column; gap: 4px;" id="inputs-options">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <div style="display: flex; width: 100%; gap: 8px;">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <div style="display:flex; flex:1; align-items:center; background:var(--bg-btn); border-radius:24px; padding:0 8px; height: 52px;">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <input type="number" id="trade-amount" value="0.35" placeholder="Amt" aria-label="Trade Amount" step="0.01" style="font-size: 14px; padding: 0; width: 100%;">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <div style="display:flex; flex:1; align-items:center; background:var(--bg-btn); border-radius:24px; padding:0 8px; height: 52px;">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h16v4L12 12l8 6v4H4v-4l8-6-8-6z"></path></svg>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <input type="number" id="trade-expiry" value="35" placeholder="Exp" aria-label="Trade Expiry Time" style="font-size: 14px; padding: 0; width: 100%;">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            <div id="payout-display" style="display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; padding: 0 4px; color: var(--text-muted);">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span>PAYOUT: <span id="payout-percentage" style="color: var(--accent);">--%</span></span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                <span>PROFIT: <span id="payout-profit" style="color: #0ecb81;">+$0.00</span></span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
                                                                                                                                                                                                                             <div style="display: none; flex: 1; gap: 8px;" id="inputs-multiplier">
                                                                                                                                                                                                                                 <div style="display:flex; flex:1; align-items:center; background:var(--bg-btn); border-radius:24px; padding:0 8px; height: 52px;">
                                                                                                                                                                                                                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
@@ -504,7 +510,33 @@
                 let ws;
                 let currentPair = "1HZ100V";
                 let tickSubscriptions = {};
-                let tradeHistory = [];
+                                let tradeHistory = [];
+                                let proposalSubId = null;
+
+                                function requestPayoutProposal() {
+                                    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+                                    if (activeTradeType !== 'options') return;
+
+                                    if (proposalSubId) {
+                                        ws.send(JSON.stringify({ forget: proposalSubId }));
+                                        proposalSubId = null;
+                                    }
+
+                                    const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
+                                    const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
+
+                                    ws.send(JSON.stringify({
+                                        proposal: 1,
+                                        amount: stake,
+                                        basis: "stake",
+                                        contract_type: "CALL", // Fetch payout dynamics using CALL as standard proxy
+                                        currency: "USD",
+                                        duration: expirySecs,
+                                        duration_unit: "s",
+                                        symbol: currentPair,
+                                        subscribe: 1
+                                    }));
+                                }
                 let marketData = {};
                 let serverTimeOffset = 0;
                 let currentTradeTab = 'ALL';
@@ -896,10 +928,11 @@
             ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
-                ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
-                resizeCanvas();
-                fetchPairData(currentPair);
-            };
+                            ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+                            resizeCanvas();
+                            fetchPairData(currentPair);
+                            requestPayoutProposal();
+                        };
 
             ws.onmessage = (msg) => {
                             const data = JSON.parse(msg.data);
@@ -943,10 +976,28 @@
                                 }
 
                                 if (data.tick) {
-                                    const symbol = data.tick.symbol;
-                                    tickSubscriptions[symbol] = data.tick.id;
-                                    processLiveTick(symbol, data.tick.epoch, data.tick.quote);
-                                }
+                                                                    const symbol = data.tick.symbol;
+                                                                    tickSubscriptions[symbol] = data.tick.id;
+                                                                    processLiveTick(symbol, data.tick.epoch, data.tick.quote);
+                                                                }
+
+                                                                if (data.proposal && data.proposal.id) {
+                                                                    proposalSubId = data.proposal.id;
+                                                                    const ask = data.proposal.ask_price;
+                                                                    const payout = data.proposal.payout;
+                                                                    const profit = payout - ask;
+                                                                    const percentage = ask > 0 ? ((profit / ask) * 100).toFixed(1) : "0.0";
+                                    
+                                                                    const pctElem = document.getElementById('payout-percentage');
+                                                                    const profElem = document.getElementById('payout-profit');
+                                                                    if (pctElem) pctElem.innerText = `${percentage}%`;
+                                                                    if (profElem) profElem.innerText = `+$${profit.toFixed(2)}`;
+                                                                }
+                                
+                                                                if (data.error && data.error.code === 'InvalidContractProposal') {
+                                                                    const pctElem = document.getElementById('payout-percentage');
+                                                                    if (pctElem) pctElem.innerText = `N/A`;
+                                                                }
 
                 if (data.buy) {
                                     const cid = data.buy.contract_id;
@@ -1101,14 +1152,15 @@
                 }
 
                 function switchPairView(newPair) {
-                    currentPair = newPair;
-                    if (!marketData[newPair] || marketData[newPair].length === 0) {
-                        loadingText.style.display = 'block';
-                        if (ws && ws.readyState === WebSocket.OPEN) fetchPairData(newPair);
-                    } else {
-                        drawChart();
-                    }
-                }
+                                    currentPair = newPair;
+                                    if (!marketData[newPair] || marketData[newPair].length === 0) {
+                                        loadingText.style.display = 'block';
+                                        if (ws && ws.readyState === WebSocket.OPEN) fetchPairData(newPair);
+                                    } else {
+                                        drawChart();
+                                    }
+                                    requestPayoutProposal();
+                                }
 
                 function getCandleDuration() {
                                     return (parseInt(candleTimeInput.value) || 8);
@@ -1243,15 +1295,16 @@
                 activeTradeType = e.target.getAttribute('data-ttype');
                 
                 if(activeTradeType === 'options') {
-                    document.getElementById('inputs-options').style.display = 'flex';
-                    document.getElementById('inputs-multiplier').style.display = 'none';
-                } else {
-                    document.getElementById('inputs-options').style.display = 'none';
-                    document.getElementById('inputs-multiplier').style.display = 'flex';
-                }
-                updateButtonText();
-            });
-        });
+                                    document.getElementById('inputs-options').style.display = 'flex';
+                                    document.getElementById('inputs-multiplier').style.display = 'none';
+                                    requestPayoutProposal();
+                                } else {
+                                    document.getElementById('inputs-options').style.display = 'none';
+                                    document.getElementById('inputs-multiplier').style.display = 'flex';
+                                }
+                                updateButtonText();
+                            });
+                        });
 
         // Event listener connections for the buttons
         document.getElementById('trade-btn').addEventListener('click', () => executeTrade("CALL"));
@@ -1274,13 +1327,13 @@
             if (callTxt) callTxt.innerText = txt;
             if (putTxt) putTxt.innerText = txt;
         }
-        document.getElementById('trade-amount').addEventListener('input', updateButtonText);
-        document.getElementById('trade-expiry').addEventListener('input', updateButtonText);
-        document.getElementById('mult-amount').addEventListener('input', updateButtonText);
-        document.getElementById('mult-value').addEventListener('change', updateButtonText);
+        document.getElementById('trade-amount').addEventListener('input', () => { updateButtonText(); requestPayoutProposal(); });
+                document.getElementById('trade-expiry').addEventListener('input', () => { updateButtonText(); requestPayoutProposal(); });
+                document.getElementById('mult-amount').addEventListener('input', updateButtonText);
+                document.getElementById('mult-value').addEventListener('change', updateButtonText);
 
-        updateButtonText();
-        connect();
+                updateButtonText();
+                connect();
 
         // --- ASSET SELECTOR MODAL LOGIC ---
                 const assetSelectorBtn = document.getElementById('asset-selector-btn');
