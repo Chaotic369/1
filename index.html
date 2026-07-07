@@ -533,16 +533,16 @@
                                                                         if (dVal <= 10) dUnit = "t";
 
                                                                         ws.send(JSON.stringify({
-                                                                            proposal: 1,
-                                                                            amount: stake,
-                                                                            basis: "stake",
-                                                                            contract_type: "CALL", // Fetch payout dynamics using CALL as standard proxy
-                                                                            currency: "USD",
-                                                                            duration: dVal,
-                                                                            duration_unit: dUnit,
-                                                                            symbol: currentPair,
-                                                                            subscribe: 1
-                                                                        }));
+                                                                                                                proposal: 1,
+                                                                                                                amount: stake,
+                                                                                                                basis: "stake",
+                                                                                                                contract_type: "CALL", // Fetch payout dynamics using CALL as standard proxy
+                                                                                                                currency: "USD",
+                                                                                                                duration: dVal,
+                                                                                                                duration_unit: dUnit,
+                                                                                                                underlying_symbol: currentPair,
+                                                                                                                subscribe: 1
+                                                                                                            }));
                                 }
                 let marketData = {};
                 let serverTimeOffset = 0;
