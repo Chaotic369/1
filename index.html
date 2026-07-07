@@ -517,35 +517,51 @@
                                 let proposalSubId = null;
 
                                 function requestPayoutProposal() {
-                                    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-                                    if (activeTradeType !== 'options') return;
+                                                                    if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-                                    if (proposalSubId) {
-                                        ws.send(JSON.stringify({ forget: proposalSubId }));
-                                        proposalSubId = null;
-                                    }
+                                                                    if (proposalSubId) {
+                                                                        ws.send(JSON.stringify({ forget: proposalSubId }));
+                                                                        proposalSubId = null;
+                                                                    }
 
-                                    const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
-                                                                                                            const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
-                                    
-                                                                                                            let dUnit = "s";
-                                                                                                            let dVal = expirySecs;
-                                                                                                            const isSynthetic = currentPair.startsWith('1HZ') || currentPair.startsWith('R_');
-                                                                                                            if (isSynthetic && dVal <= 10) dUnit = "t";
+                                                                    if (activeTradeType === 'options') {
+                                                                        const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
+                                                                        const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
+                                        
+                                                                        let dUnit = "s";
+                                                                        let dVal = expirySecs;
+                                                                        const isSynthetic = currentPair.startsWith('1HZ') || currentPair.startsWith('R_');
+                                                                        if (isSynthetic && dVal <= 10) dUnit = "t";
 
                                                                         ws.send(JSON.stringify({
-                                                                                                                req_id: 1,
-                                                                                                                proposal: 1,
-                                                                                                                amount: stake,
-                                                                                                                basis: "stake",
-                                                                                                                contract_type: "CALL", // Fetch payout dynamics using CALL as standard proxy
-                                                                                                                currency: "USD",
-                                                                                                                duration: dVal,
-                                                                                                                duration_unit: dUnit,
-                                                                                                                underlying_symbol: currentPair,
-                                                                                                                subscribe: 1
-                                                                                                            }));
-                                }
+                                                                            req_id: 1,
+                                                                            proposal: 1,
+                                                                            amount: stake,
+                                                                            basis: "stake",
+                                                                            contract_type: "CALL",
+                                                                            currency: "USD",
+                                                                            duration: dVal,
+                                                                            duration_unit: dUnit,
+                                                                            underlying_symbol: currentPair,
+                                                                            subscribe: 1
+                                                                        }));
+                                                                    } else if (activeTradeType === 'multiplier') {
+                                                                        const stake = parseFloat(document.getElementById('mult-amount').value) || 10;
+                                                                        const multVal = parseInt(document.getElementById('mult-value').value) || 500;
+                                        
+                                                                        ws.send(JSON.stringify({
+                                                                            req_id: 2,
+                                                                            proposal: 1,
+                                                                            amount: stake,
+                                                                            basis: "stake",
+                                                                            contract_type: "MULTUP",
+                                                                            currency: "USD",
+                                                                            multiplier: multVal,
+                                                                            underlying_symbol: currentPair,
+                                                                            subscribe: 1
+                                                                        }));
+                                                                    }
+                                                                }
                 let marketData = {};
                 let serverTimeOffset = 0;
                 let currentTradeTab = 'ALL';
@@ -947,80 +963,108 @@
                             const data = JSON.parse(msg.data);
 
                                             if (data.error) {
-                                                                                                                                        if (data.error.code === 'ContractNotFound' || data.error.message.includes('not found among your open positions')) {
-                                                                                                                                            // Suppress silent failures for closing expired contracts
-                                                                                                                                            return;
-                                                                                                                                        }
+                                                                                            if (data.error.code === 'ContractNotFound' || data.error.message.includes('not found among your open positions')) {
+                                                                                                // Suppress silent failures for closing expired contracts
+                                                                                                return;
+                                                                                            }
                                                 
-                                                                                                                                        console.error("API Error:", data.error.message);
+                                                                                            console.error("API Error:", data.error.message);
 
-                                                                                                                                        // Intercept background proposal errors completely to prevent alert spam
-                                                                                                                                                                                                                                    if (data.req_id === 1) {
-                                                                                                                                                                                                                                        const pctElem = document.getElementById('payout-percentage');
-                                                                                                                                                                                                                                        const rateBadge = document.getElementById('asset-payout-rate');
-                                                                                                                                                                                                                                        const profElem = document.getElementById('payout-profit');
-                                                                                                
-                                                                                                                                                                                                                                        const msg = data.error.message.toLowerCase();
+                                                                                            // Intercept background proposal errors completely to prevent alert spam
+                                                                                            if (data.req_id === 1 || data.req_id === 2) {
+                                                                                                const pctElem = document.getElementById('payout-percentage');
+                                                                                                const rateBadge = document.getElementById('asset-payout-rate');
+                                                                                                const profElem = document.getElementById('payout-profit');
+                                                    
+                                                                                                const msg = data.error.message.toLowerCase();
 
-                                                                                                                                                                                                                                        if (msg.includes('closed') || data.error.code === 'MarketIsClosed' || data.error.code === 'OptionTradingNotOffered') {
-                                                                                                                                                                                                                                            if (pctElem) pctElem.innerText = `OFFLINE`;
-                                                                                                                                                                                                                                            if (rateBadge) rateBadge.innerText = `ASSET OFFLINE`;
-                                                                                                                                                                                                                                            if (profElem) {
-                                                                                                                                                                                                                                                profElem.innerText = `CLOSED`;
-                                                                                                                                                                                                                                                profElem.style.color = '#f6465d';
-                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                            return;
-                                                                                                                                                                                                                                        }
+                                                                                                // Multiplier dropdown auto-fix based on API response
+                                                                                                const matchMult = data.error.message.match(/Accepts\s+([\d,\s]+)/i);
+                                                                                                if (matchMult) {
+                                                                                                    const allowed = matchMult[1].split(',').map(s => s.trim());
+                                                                                                    const selectEl = document.getElementById('mult-value');
+                                                                                                    if (selectEl && allowed.length > 0) {
+                                                                                                        selectEl.innerHTML = '';
+                                                                                                        allowed.forEach(val => {
+                                                                                                            const opt = document.createElement('option');
+                                                                                                            opt.value = val;
+                                                                                                            opt.innerText = val;
+                                                                                                            opt.style.color = 'black';
+                                                                                                            selectEl.appendChild(opt);
+                                                                                                        });
+                                                                                                        selectEl.value = allowed[0];
+                                                                                                        updateButtonText();
+                                                                                                        setTimeout(requestPayoutProposal, 500);
+                                                                                                    }
+                                                                                                    return;
+                                                                                                }
 
-                                                                                                                                                                                                                                        if (pctElem) pctElem.innerText = `N/A`;
-                                                                                                                                                                                                                                        if (rateBadge) rateBadge.innerText = `UNAVAILABLE`;
-                                                                                                                                                                                                                                        if (profElem) {
-                                                                                                                                                                                                                                            profElem.innerText = `INVALID`;
-                                                                                                                                                                                                                                            profElem.style.color = '#f6465d';
-                                                                                                                                                                                                                                        }
+                                                                                                if (msg.includes('closed') || data.error.code === 'MarketIsClosed' || data.error.code === 'OptionTradingNotOffered') {
+                                                                                                    if (pctElem) pctElem.innerText = `OFFLINE`;
+                                                                                                    if (rateBadge) rateBadge.innerText = `ASSET OFFLINE`;
+                                                                                                    if (profElem) {
+                                                                                                        profElem.innerText = `CLOSED`;
+                                                                                                        profElem.style.color = '#f6465d';
+                                                                                                    }
+                                                                                                    return;
+                                                                                                }
 
-                                                                                                                                                                                                                                        // Auto-correct minimum stake if API explicitly provides it in the error
-                                                                                                                                                                                                                                        const matchAmt = msg.match(/minimum stake.*?(\d+\.?\d*)/);
-                                                                                                                                                                                                                                        if (matchAmt) {
-                                                                                                                                                                                                                                            document.getElementById('trade-amount').value = matchAmt[1];
-                                                                                                                                                                                                                                            updateButtonText();
-                                                                                                                                                                                                                                            setTimeout(requestPayoutProposal, 500);
-                                                                                                                                                                                                                                            return;
-                                                                                                                                                                                                                                        }
-                                                                                                
-                                                                                                                                                                                                                                        // Auto-correct minimum duration if API explicitly provides it
-                                                                                                                                                                                                                                        const matchDur = msg.match(/at least (\d+) (minute|second)/) || msg.match(/minimum of (\d+) (minute|second)/);
-                                                                                                                                                                                                                                        if (matchDur) {
-                                                                                                                                                                                                                                            let reqExp = parseInt(matchDur[1]);
-                                                                                                                                                                                                                                            if (matchDur[2] === 'minute') reqExp = reqExp * 60;
-                                                                                                                                                                                                                                            document.getElementById('trade-expiry').value = reqExp;
-                                                                                                                                                                                                                                            updateButtonText();
-                                                                                                                                                                                                                                            setTimeout(requestPayoutProposal, 500);
-                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                        return; 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            }
+                                                                                                if (pctElem) pctElem.innerText = `N/A`;
+                                                                                                if (rateBadge) rateBadge.innerText = `UNAVAILABLE`;
+                                                                                                if (profElem) {
+                                                                                                    profElem.innerText = `INVALID`;
+                                                                                                    profElem.style.color = '#f6465d';
+                                                                                                }
 
-                                                                                                                                                                                                                                                                                                                                                                                if (data.error.code === 'AlreadySubscribed' || data.error.message.includes('already subscribed')) {
-                                                                                                                                                                                                                                                                                                                                                                                    return;
-                                                                                                                                                                                                                                                                                                                                                                                }
+                                                                                                // Auto-correct minimum stake if API explicitly provides it in the error
+                                                                                                const matchAmt = msg.match(/minimum stake.*?(\d+\.?\d*)/);
+                                                                                                if (matchAmt) {
+                                                                                                    if (data.req_id === 1) document.getElementById('trade-amount').value = matchAmt[1];
+                                                                                                    if (data.req_id === 2) document.getElementById('mult-amount').value = matchAmt[1];
+                                                                                                    updateButtonText();
+                                                                                                    setTimeout(requestPayoutProposal, 500);
+                                                                                                    return;
+                                                                                                }
+                                                    
+                                                                                                // Auto-correct minimum duration if API explicitly provides it
+                                                                                                const matchDur = msg.match(/at least (\d+) (minute|second)/) || msg.match(/minimum of (\d+) (minute|second)/);
+                                                                                                if (matchDur && data.req_id === 1) {
+                                                                                                    let reqExp = parseInt(matchDur[1]);
+                                                                                                    if (matchDur[2] === 'minute') reqExp = reqExp * 60;
+                                                                                                    document.getElementById('trade-expiry').value = reqExp;
+                                                                                                    updateButtonText();
+                                                                                                    setTimeout(requestPayoutProposal, 500);
+                                                                                                }
+                                                                                                return; 
+                                                                                            }
 
-                                                                                                                                                                                                                                                                                                                                                                                if (data.error.code === 'RateLimit' || data.error.message.includes('rate limit')) {
-                                                                                                                                                                                                                                                                                                                                                                                    console.warn("Deriv API Rate Limit hit - request ignored.");
-                                                                                                                                                                                                                                                                                                                                                                                    return;
-                                                                                                                                                                                                                                                                                                                                                                                }
+                                                                                            if (data.error.code === 'AlreadySubscribed' || data.error.message.includes('already subscribed')) {
+                                                                                                return;
+                                                                                            }
 
-                                                                                                                                                                                                                                                                                                                                                                                if (data.error.code === 'InvalidToken' || data.error.code === 'AuthorizationRequired') {
-                                                                                                                                                                                                                                                                                                                                                                                    setTimeout(connect, 5000); // Silent reconnect loop
-                                                                                                                                                                                                                                                                                                                                                                                } else if (data.error.code === 'MarketIsClosed' || data.error.message.toLowerCase().includes('closed')) {
-                                                                                                                                                                                                                                                                                                                                                                                    alert("⛔ ASSET OFFLINE: This market is currently closed. Please choose a different asset.");
-                                                                                                                                                                                                                                                                                                                                                                                } else if (data.error.code === 'InvalidContractParameters') {
-                                                                                                                                                                                                                                                                                                                                                                                    alert("⚠️ PARAMETER ERROR: Trading is not available for this Symbol at the selected duration/mode.\n\nTry changing Duration or Asset.");
-                                                                                                                                                                                                                                                                                                                                                                                } else {
-                                                                                                                                                                                                                                                                                                                                                                                    // Only alert on manual user actions (like clicking trade) that fail
-                                                                                                                                                                                                                                                                                                                                                                                    alert("⚠️ API ERROR: " + data.error.message);
-                                                                                                                                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                                                                                                                                return;
-                                                                                                                                                                                                                                                                                                                                                                            }
+                                                                                            if (data.error.code === 'RateLimit' || data.error.message.includes('rate limit')) {
+                                                                                                console.warn("Deriv API Rate Limit hit - request ignored.");
+                                                                                                return;
+                                                                                            }
+
+                                                                                            if (data.error.code === 'InvalidToken' || data.error.code === 'AuthorizationRequired') {
+                                                                                                setTimeout(connect, 5000); // Silent reconnect loop
+                                                                                            } else if (data.error.code === 'MarketIsClosed' || data.error.message.toLowerCase().includes('closed')) {
+                                                                                                alert("⛔ ASSET OFFLINE: This market is currently closed. Please choose a different asset.");
+                                                                                            } else if (data.error.code === 'InvalidContractParameters') {
+                                                                                                alert("⚠️ PARAMETER ERROR: Trading is not available for this Symbol at the selected duration/mode.\n\nTry changing Duration or Asset.");
+                                                                                            } else {
+                                                                                                const matchMult = data.error.message.match(/Accepts\s+([\d,\s]+)/i);
+                                                                                                if (matchMult) {
+                                                                                                    alert("⚠️ Multiplier updated to valid range for this asset. Please click trade again.");
+                                                                                                    setTimeout(requestPayoutProposal, 100);
+                                                                                                } else {
+                                                                                                    // Only alert on manual user actions (like clicking trade) that fail
+                                                                                                    alert("⚠️ API ERROR: " + data.error.message);
+                                                                                                }
+                                                                                            }
+                                                                                            return;
+                                                                                        }
 
                                             if (data.balance) {
                                                 balanceDisplay.innerText = `$${data.balance.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
@@ -1362,14 +1406,14 @@
                 activeTradeType = e.target.getAttribute('data-ttype');
                 
                 if(activeTradeType === 'options') {
-                                    document.getElementById('inputs-options').style.display = 'flex';
-                                    document.getElementById('inputs-multiplier').style.display = 'none';
-                                    requestPayoutProposal();
-                                } else {
-                                    document.getElementById('inputs-options').style.display = 'none';
-                                    document.getElementById('inputs-multiplier').style.display = 'flex';
-                                }
-                                updateButtonText();
+                                                    document.getElementById('inputs-options').style.display = 'flex';
+                                                    document.getElementById('inputs-multiplier').style.display = 'none';
+                                                } else {
+                                                    document.getElementById('inputs-options').style.display = 'none';
+                                                    document.getElementById('inputs-multiplier').style.display = 'flex';
+                                                }
+                                                requestPayoutProposal();
+                                                updateButtonText();
                             });
                         });
 
