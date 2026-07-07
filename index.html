@@ -526,11 +526,12 @@
                                     }
 
                                     const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
-                                                                        const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
+                                                                                                            const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
                                     
-                                                                        let dUnit = "s";
-                                                                        let dVal = expirySecs;
-                                                                        if (dVal <= 10) dUnit = "t";
+                                                                                                            let dUnit = "s";
+                                                                                                            let dVal = expirySecs;
+                                                                                                            const isSynthetic = currentPair.startsWith('1HZ') || currentPair.startsWith('R_');
+                                                                                                            if (isSynthetic && dVal <= 10) dUnit = "t";
 
                                                                         ws.send(JSON.stringify({
                                                                                                                 req_id: 1,
@@ -954,48 +955,72 @@
                                                                                                                                         console.error("API Error:", data.error.message);
 
                                                                                                                                         // Intercept background proposal errors completely to prevent alert spam
-                                                                                                                                        if (data.req_id === 1) {
-                                                                                                                                            const pctElem = document.getElementById('payout-percentage');
-                                                                                                                                            const rateBadge = document.getElementById('asset-payout-rate');
-                                                                                                                                            const profElem = document.getElementById('payout-profit');
+                                                                                                                                                                                                                                    if (data.req_id === 1) {
+                                                                                                                                                                                                                                        const pctElem = document.getElementById('payout-percentage');
+                                                                                                                                                                                                                                        const rateBadge = document.getElementById('asset-payout-rate');
+                                                                                                                                                                                                                                        const profElem = document.getElementById('payout-profit');
                                                                                                 
-                                                                                                                                            if (pctElem) pctElem.innerText = `N/A`;
-                                                                                                                                            if (rateBadge) rateBadge.innerText = `UNAVAILABLE`;
-                                                                                                                                            if (profElem) {
-                                                                                                                                                profElem.innerText = `INVALID`;
-                                                                                                                                                profElem.style.color = '#f6465d';
-                                                                                                                                            }
+                                                                                                                                                                                                                                        const msg = data.error.message.toLowerCase();
 
-                                                                                                                                            // Auto-correct minimum stake if API explicitly provides it in the error
-                                                                                                                                            const msg = data.error.message.toLowerCase();
-                                                                                                                                            const matchAmt = msg.match(/minimum stake.*?(\d+\.?\d*)/);
-                                                                                                                                            if (matchAmt) {
-                                                                                                                                                document.getElementById('trade-amount').value = matchAmt[1];
-                                                                                                                                                updateButtonText();
-                                                                                                                                                setTimeout(requestPayoutProposal, 500);
-                                                                                                                                            }
-                                                                                                                                            return; 
-                                                                                                                                        }
+                                                                                                                                                                                                                                        if (msg.includes('closed') || data.error.code === 'MarketIsClosed' || data.error.code === 'OptionTradingNotOffered') {
+                                                                                                                                                                                                                                            if (pctElem) pctElem.innerText = `OFFLINE`;
+                                                                                                                                                                                                                                            if (rateBadge) rateBadge.innerText = `ASSET OFFLINE`;
+                                                                                                                                                                                                                                            if (profElem) {
+                                                                                                                                                                                                                                                profElem.innerText = `CLOSED`;
+                                                                                                                                                                                                                                                profElem.style.color = '#f6465d';
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                            return;
+                                                                                                                                                                                                                                        }
 
-                                                                                                                                        if (data.error.code === 'AlreadySubscribed' || data.error.message.includes('already subscribed')) {
-                                                                                                                                            return;
-                                                                                                                                        }
+                                                                                                                                                                                                                                        if (pctElem) pctElem.innerText = `N/A`;
+                                                                                                                                                                                                                                        if (rateBadge) rateBadge.innerText = `UNAVAILABLE`;
+                                                                                                                                                                                                                                        if (profElem) {
+                                                                                                                                                                                                                                            profElem.innerText = `INVALID`;
+                                                                                                                                                                                                                                            profElem.style.color = '#f6465d';
+                                                                                                                                                                                                                                        }
 
-                                                                                                                                        if (data.error.code === 'RateLimit' || data.error.message.includes('rate limit')) {
-                                                                                                                                            console.warn("Deriv API Rate Limit hit - request ignored.");
-                                                                                                                                            return;
-                                                                                                                                        }
+                                                                                                                                                                                                                                        // Auto-correct minimum stake if API explicitly provides it in the error
+                                                                                                                                                                                                                                        const matchAmt = msg.match(/minimum stake.*?(\d+\.?\d*)/);
+                                                                                                                                                                                                                                        if (matchAmt) {
+                                                                                                                                                                                                                                            document.getElementById('trade-amount').value = matchAmt[1];
+                                                                                                                                                                                                                                            updateButtonText();
+                                                                                                                                                                                                                                            setTimeout(requestPayoutProposal, 500);
+                                                                                                                                                                                                                                            return;
+                                                                                                                                                                                                                                        }
+                                                                                                
+                                                                                                                                                                                                                                        // Auto-correct minimum duration if API explicitly provides it
+                                                                                                                                                                                                                                        const matchDur = msg.match(/at least (\d+) (minute|second)/) || msg.match(/minimum of (\d+) (minute|second)/);
+                                                                                                                                                                                                                                        if (matchDur) {
+                                                                                                                                                                                                                                            let reqExp = parseInt(matchDur[1]);
+                                                                                                                                                                                                                                            if (matchDur[2] === 'minute') reqExp = reqExp * 60;
+                                                                                                                                                                                                                                            document.getElementById('trade-expiry').value = reqExp;
+                                                                                                                                                                                                                                            updateButtonText();
+                                                                                                                                                                                                                                            setTimeout(requestPayoutProposal, 500);
+                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                        return; 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            }
 
-                                                                                                                                        if (data.error.code === 'InvalidToken' || data.error.code === 'AuthorizationRequired') {
-                                                                                                                                            setTimeout(connect, 5000); // Silent reconnect loop
-                                                                                                                                        } else if (data.error.code === 'InvalidContractParameters') {
-                                                                                                                                            alert("⚠️ PARAMETER ERROR: Trading is not available for this Symbol at the selected duration/mode.\n\nTry changing Duration or Asset.");
-                                                                                                                                        } else {
-                                                                                                                                            // Only alert on manual user actions (like clicking trade) that fail
-                                                                                                                                            alert("⚠️ API ERROR: " + data.error.message);
-                                                                                                                                        }
-                                                                                                                                        return;
-                                                                                                                                    }
+                                                                                                                                                                                                                                                                                                                                                                                if (data.error.code === 'AlreadySubscribed' || data.error.message.includes('already subscribed')) {
+                                                                                                                                                                                                                                                                                                                                                                                    return;
+                                                                                                                                                                                                                                                                                                                                                                                }
+
+                                                                                                                                                                                                                                                                                                                                                                                if (data.error.code === 'RateLimit' || data.error.message.includes('rate limit')) {
+                                                                                                                                                                                                                                                                                                                                                                                    console.warn("Deriv API Rate Limit hit - request ignored.");
+                                                                                                                                                                                                                                                                                                                                                                                    return;
+                                                                                                                                                                                                                                                                                                                                                                                }
+
+                                                                                                                                                                                                                                                                                                                                                                                if (data.error.code === 'InvalidToken' || data.error.code === 'AuthorizationRequired') {
+                                                                                                                                                                                                                                                                                                                                                                                    setTimeout(connect, 5000); // Silent reconnect loop
+                                                                                                                                                                                                                                                                                                                                                                                } else if (data.error.code === 'MarketIsClosed' || data.error.message.toLowerCase().includes('closed')) {
+                                                                                                                                                                                                                                                                                                                                                                                    alert("⛔ ASSET OFFLINE: This market is currently closed. Please choose a different asset.");
+                                                                                                                                                                                                                                                                                                                                                                                } else if (data.error.code === 'InvalidContractParameters') {
+                                                                                                                                                                                                                                                                                                                                                                                    alert("⚠️ PARAMETER ERROR: Trading is not available for this Symbol at the selected duration/mode.\n\nTry changing Duration or Asset.");
+                                                                                                                                                                                                                                                                                                                                                                                } else {
+                                                                                                                                                                                                                                                                                                                                                                                    // Only alert on manual user actions (like clicking trade) that fail
+                                                                                                                                                                                                                                                                                                                                                                                    alert("⚠️ API ERROR: " + data.error.message);
+                                                                                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                                                                                                return;
+                                                                                                                                                                                                                                                                                                                                                                            }
 
                                             if (data.balance) {
                                                 balanceDisplay.innerText = `$${data.balance.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
@@ -1281,12 +1306,13 @@
             let tradePayload;
 
             if (activeTradeType === 'options') {
-                            const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
-                            const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
+                                        const stake = parseFloat(document.getElementById('trade-amount').value) || 10;
+                                        const expirySecs = parseInt(document.getElementById('trade-expiry').value) || 300;
                 
-                            let dUnit = "s";
-                            let dVal = expirySecs;
-                            if (dVal <= 10) dUnit = "t";
+                                        let dUnit = "s";
+                                        let dVal = expirySecs;
+                                        const isSynthetic = currentPair.startsWith('1HZ') || currentPair.startsWith('R_');
+                                        if (isSynthetic && dVal <= 10) dUnit = "t";
 
                             tradePayload = {
                                 buy: "1",
@@ -1352,12 +1378,13 @@
         document.getElementById('trade-btn-put').addEventListener('click', () => executeTrade("PUT"));
 
         function updateButtonText() {
-                    let txt = '';
-                    if (activeTradeType === 'options') {
-                        const amt = document.getElementById('trade-amount').value || '0';
-                        const exp = document.getElementById('trade-expiry').value || '0';
-                        const unit = parseInt(exp) <= 10 ? 't' : 's';
-                        txt = `$${amt} | ${exp}${unit}`;
+                            let txt = '';
+                            if (activeTradeType === 'options') {
+                                const amt = document.getElementById('trade-amount').value || '0';
+                                const exp = document.getElementById('trade-expiry').value || '0';
+                                const isSynthetic = currentPair.startsWith('1HZ') || currentPair.startsWith('R_');
+                                const unit = (isSynthetic && parseInt(exp) <= 10) ? 't' : 's';
+                                txt = `$${amt} | ${exp}${unit}`;
             } else {
                 const amt = document.getElementById('mult-amount').value || '0';
                 const mult = document.getElementById('mult-value').value || '0';
