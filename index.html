@@ -342,17 +342,19 @@
                         <canvas id="custom-chart"></canvas>
                     </div>
                     <div class="floating-timeframe">
-                        <div class="floating-timeframe-top">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            <input type="number" id="candle-time" value="8" placeholder="Time" aria-label="Candle Time Frame in Seconds" step="1">
-                        </div>
-                        <div style="display:flex; gap:4px; margin-top: 6px; width: 100%; justify-content: space-between;">
-                            <button class="quick-time-btn" data-val="1">1s</button>
-                            <button class="quick-time-btn" data-val="5">5s</button>
-                            <button class="quick-time-btn" data-val="15">15s</button>
-                            <button class="quick-time-btn" data-val="60">1m</button>
-                        </div>
-                    </div>
+                                            <div class="floating-timeframe-top">
+                                                <svg id="timeframe-toggle-btn" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px; cursor: pointer;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                                <input type="number" id="candle-time" value="8" placeholder="Time" aria-label="Candle Time Frame in Seconds" step="1">
+                                            </div>
+                                            <div id="quick-time-container" style="display:none; gap:4px; margin-top: 6px; width: 100%; grid-template-columns: repeat(3, 1fr);">
+                                                <button class="quick-time-btn" data-val="1">1s</button>
+                                                <button class="quick-time-btn" data-val="5">5s</button>
+                                                <button class="quick-time-btn" data-val="15">15s</button>
+                                                <button class="quick-time-btn" data-val="60">1m</button>
+                                                <button class="quick-time-btn" data-val="300">5m</button>
+                                                <button class="quick-time-btn" data-val="900">15m</button>
+                                            </div>
+                                        </div>
                 </div>
                 <div class="bottom-controls">
                             <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 4px; margin-bottom: 2px;">
@@ -1326,21 +1328,28 @@
                                     }
 
                             // --- INPUT EVENT LISTENERS ---
-                                    candleTimeInput.addEventListener('change', () => {
-                                                loadingText.style.display = 'block';
-                                                if (ws && ws.readyState === WebSocket.OPEN) {
-                                                    marketData[currentPair] = [];
-                                                    fetchPairData(currentPair);
-                                                }
-                                            });
+                                                                candleTimeInput.addEventListener('change', () => {
+                                                                            loadingText.style.display = 'block';
+                                                                            if (ws && ws.readyState === WebSocket.OPEN) {
+                                                                                marketData[currentPair] = [];
+                                                                                fetchPairData(currentPair);
+                                                                            }
+                                                                        });
                                     
-                                    // Quick time buttons
-                                    document.querySelectorAll('.quick-time-btn').forEach(btn => {
-                                        btn.addEventListener('click', (e) => {
-                                            document.getElementById('candle-time').value = e.target.getAttribute('data-val');
-                                            document.getElementById('candle-time').dispatchEvent(new Event('change'));
-                                        });
-                                    });
+                                                                // Timeframe Toggle
+                                                                document.getElementById('timeframe-toggle-btn').addEventListener('click', () => {
+                                                                    const qtContainer = document.getElementById('quick-time-container');
+                                                                    qtContainer.style.display = (qtContainer.style.display === 'none') ? 'grid' : 'none';
+                                                                });
+
+                                                                // Quick time buttons
+                                                                document.querySelectorAll('.quick-time-btn').forEach(btn => {
+                                                                    btn.addEventListener('click', (e) => {
+                                                                        document.getElementById('candle-time').value = e.target.getAttribute('data-val');
+                                                                        document.getElementById('quick-time-container').style.display = 'none';
+                                                                        document.getElementById('candle-time').dispatchEvent(new Event('change'));
+                                                                    });
+                                                                });
 
         function executeTrade(type) {
             if (!ws || ws.readyState !== WebSocket.OPEN) {
