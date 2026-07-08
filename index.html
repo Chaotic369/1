@@ -1155,10 +1155,11 @@
                                         entry_time: data.buy.start_time || currentServerTime
                                     };
                     tradeHistory.push(t);
-                    playAlert('buy');
+                                        playAlert('buy');
+                                        try { localStorage.setItem('trade_history_v2', JSON.stringify(tradeHistory)); } catch(e) {}
 
-                    // Immediately subscribe to the live profit updates for this contract
-                                        ws.send(JSON.stringify({"proposal_open_contract": 1, "contract_id": cid, "subscribe": 1}));
+                                        // Immediately subscribe to the live profit updates for this contract
+                                                            ws.send(JSON.stringify({"proposal_open_contract": 1, "contract_id": cid, "subscribe": 1}));
 
                                         updateTradeUI();
                                         updateQuickCashoutUI();
@@ -1188,11 +1189,12 @@
                         if (c.entry_tick) t.entry_spot = c.entry_tick;
 
                         if (oldStatus === 'OPEN' && t.status !== 'OPEN') {
-                            playAlert(t.status === 'WON' ? 'win' : 'loss');
-                        }
+                                                    playAlert(t.status === 'WON' ? 'win' : 'loss');
+                                                    try { localStorage.setItem('trade_history_v2', JSON.stringify(tradeHistory)); } catch(e) {}
+                                                }
 
-                        // Re-render UI to show dynamic ticking live profit and sell button toggle
-                                                updateTradeUI();
+                                                // Re-render UI to show dynamic ticking live profit and sell button toggle
+                                                                        updateTradeUI();
                                                 updateQuickCashoutUI();
                                             }
                                         }
