@@ -253,33 +253,48 @@
             }
 
             .floating-timeframe {
-                                                position: absolute;
-                                                top: 20px;
-                                                left: 15px;
-                                                display: flex;
-                                                flex-direction: column;
-                                                align-items: flex-start;
-                                                background: var(--bg-panel);
-                                                border: none;
-                                                border-radius: 16px;
-                                                padding: 6px 10px;
-                                                z-index: 20;
-                                                box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-                                            }
-            .floating-timeframe-top {
-                display: flex;
-                align-items: center;
-            }
-                                            .floating-timeframe input {
-                                                width: 55px;
-                                                background: transparent;
-                                                border: none;
-                                                color: var(--text-main);
-                                                text-align: center;
-                                                font-weight: bold;
-                                                outline: none;
-                                                padding: 0;
-                                            }
+                                                            position: absolute;
+                                                            top: 20px;
+                                                            left: 15px;
+                                                            display: flex;
+                                                            flex-direction: column;
+                                                            align-items: flex-start;
+                                                            background: var(--bg-panel);
+                                                            border: none;
+                                                            border-radius: 16px;
+                                                            padding: 6px 10px;
+                                                            z-index: 20;
+                                                            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                                                        }
+                        .floating-timeframe-top {
+                            display: flex;
+                            align-items: center;
+                        }
+                                                        .floating-timeframe input {
+                                                                                                        width: 55px;
+                                                                                                        background: transparent;
+                                                                                                        border: none;
+                                                                                                        color: var(--text-main);
+                                                                                                        text-align: center;
+                                                                                                        font-weight: bold;
+                                                                                                        outline: none;
+                                                                                                        padding: 0;
+                                                                                                    }
+                        .floating-timeframe-top {
+                            display: flex;
+                            align-items: center;
+                        }
+                                                        .floating-timeframe input {
+                                                            width: 45px;
+                                                            font-size: 12px;
+                                                            background: transparent;
+                                                            border: none;
+                                                            color: var(--text-main);
+                                                            text-align: center;
+                                                            font-weight: bold;
+                                                            outline: none;
+                                                            padding: 0;
+                                                        }
             .floating-timeframe input[type=number]::-webkit-inner-spin-button,
             .floating-timeframe input[type=number]::-webkit-outer-spin-button {
                 -webkit-appearance: auto;
@@ -291,15 +306,15 @@
             }
             
             .quick-time-btn { 
-                background: var(--bg-btn); 
-                color: var(--text-muted); 
-                border: none; 
-                padding: 2px 6px; 
-                font-size: 10px; 
-                cursor: pointer; 
-                border-radius: 12px; 
-                font-weight: bold; 
-            }
+                            background: var(--bg-btn); 
+                            color: var(--text-muted); 
+                            border: none; 
+                            padding: 2px 6px; 
+                            font-size: 10px; 
+                            cursor: pointer; 
+                            border-radius: 12px; 
+                            font-weight: bold; 
+                        }
             .quick-time-btn:hover { color: var(--text-main); }
 
             #loading-text {
@@ -1337,12 +1352,22 @@
                                                                         });
                                     
                                                                 // Timeframe Toggle
-                                                                document.getElementById('timeframe-toggle-btn').addEventListener('click', () => {
-                                                                    const qtContainer = document.getElementById('quick-time-container');
-                                                                    qtContainer.style.display = (qtContainer.style.display === 'none') ? 'grid' : 'none';
-                                                                });
+                                                                                                    document.getElementById('timeframe-toggle-btn').addEventListener('click', () => {
+                                                                                                        const qtContainer = document.getElementById('quick-time-container');
+                                                                                                        qtContainer.style.display = (qtContainer.style.display === 'none') ? 'grid' : 'none';
+                                                                                                    });
+                                                                                                    document.getElementById('candle-time').addEventListener('click', () => {
+                                                                                                                                            document.getElementById('quick-time-container').style.display = 'grid';
+                                                                                                                                        });
 
-                                                                // Quick time buttons
+                                                                                                                                        // Hide quick time container when clicking outside
+                                                                                                                                        document.addEventListener('click', (e) => {
+                                                                                                                                            if (!e.target.closest('.floating-timeframe')) {
+                                                                                                                                                document.getElementById('quick-time-container').style.display = 'none';
+                                                                                                                                            }
+                                                                                                                                        });
+
+                                                                                                                                        // Quick time buttons
                                                                 document.querySelectorAll('.quick-time-btn').forEach(btn => {
                                                                     btn.addEventListener('click', (e) => {
                                                                         document.getElementById('candle-time').value = e.target.getAttribute('data-val');
