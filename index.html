@@ -1004,12 +1004,20 @@
                             const data = JSON.parse(msg.data);
 
                                             if (data.error) {
-                                                                                            if (data.error.code === 'ContractNotFound' || data.error.message.includes('not found among your open positions')) {
-                                                                                                // Suppress silent failures for closing expired contracts
-                                                                                                return;
-                                                                                            }
+                                                                                                                                        if (data.error.code === 'ContractNotFound' || data.error.message.includes('not found among your open positions')) {
+                                                                                                                                            if (data.echo_req && data.echo_req.contract_id) {
+                                                                                                                                                const stuckTrade = tradeHistory.find(t => t.id === data.echo_req.contract_id);
+                                                                                                                                                if (stuckTrade && stuckTrade.status === 'OPEN') {
+                                                                                                                                                    stuckTrade.status = 'CLOSED';
+                                                                                                                                                    try { localStorage.setItem('trade_history_v2', JSON.stringify(tradeHistory)); } catch(e) {}
+                                                                                                                                                    if (typeof updateTradeUI === 'function') updateTradeUI();
+                                                                                                                                                    if (typeof updateQuickCashoutUI === 'function') updateQuickCashoutUI();
+                                                                                                                                                }
+                                                                                                                                            }
+                                                                                                                                            return;
+                                                                                                                                        }
                                                 
-                                                                                            console.error("API Error:", data.error.message);
+                                                                                                                                        console.error("API Error:", data.error.message);
 
                                                                                             // Intercept background proposal errors completely to prevent alert spam
                                                                                             if (data.req_id === 1 || data.req_id === 2) {
